@@ -1,0 +1,538 @@
+#connect kmemlinks links for kernel memory
+#memcell capacity is 64
+#membank capacity is 512
+#set kmemcapacity to the capacity of the kernel memory links(not sum, the minimal capacity of all of them)
+#change procc to the amount of processes
+
+#0-command
+#negative commands are kernel to proc
+#positive are app
+#1-62 data
+#-1 as command identification request(app name max 12(two doubles worth of bytes) chars add ~ at end if name too long,3rd double is id for executables if multiple with same name)
+#-2 as command stop
+#-3 as command start
+#-4 as command is reporting error
+#-5 as command is response
+set COPYRIGHT "ukern – simple microkernel\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set SOURCELINK "https://github.com/BasedUser/mPC"
+set ver 1
+set kmemlinks 8
+set kmemcapacity 64
+set procc 4
+op add procml kmemlinks procc
+set i kmemlinks
+
+identrequestloop:
+
+getlink app i
+write -1 app 0
+op add i i 1
+jump identrequestloop lessThan i procml
+
+identassign:
+
+set i 0
+set appi kmemlinks
+
+identassignloop:
+
+getlink app appi
+op mul targ i 5
+read ready app 0
+jump identcheckloopskip notEqual ready 0
+read nh app 1
+read nl app 2
+read num app 3
+set index targ
+set val nh
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val nl
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val num
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val -1
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val -1
+op add km_callback @counter 1
+jump kmemwrite always
+write -2 app 0
+
+identcheckloopskip:
+
+op add i i 1
+op add appi appi 1
+jump identassignloop lessThan appi procml
+#checking if everyone identified themselves
+set index 3
+set identnotall 0
+op mul term procc 5
+
+identcheckallloop:
+
+op add km_callback @counter 1
+jump kmemread always
+jump identcheckallsuccess equal val -1
+set identnotall 1
+
+identcheckallsuccess:
+
+op add index index 5
+jump identcheckallloop lessThan index term
+jump identrequestloop equal identnotall 1
+#everyone identified
+#time to start init
+set index 0
+set initfound 0
+op mul term procc 5
+
+initfindloop:
+
+op add km_callback @counter 1
+jump kmemread always
+op equal nhe val 0
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+op equal nle val 0x696e6974
+op add index index 4
+op land isinit nhe nle
+op or initfound isinit initfound
+jump initcheckfail equal isinit 0
+op idiv initslot index 5
+op sub initslot initslot 1
+
+initcheckfail:
+
+jump initfindloop lessThan index term
+jump initfound equal initfound 1
+set error "could not find init!"
+stop
+
+initfound:
+
+op mul initstatusi initslot 5
+op add index initstatusi 3
+set val 0
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+op add km_callback @counter 1
+jump kmemwrite always
+op add initapp initslot kmemlinks
+getlink initapp initapp
+write -3 initapp 0
+#check for ipc and kill commands
+set cpid 1
+set cipcmsgid 0
+set cipcmsgslot 0
+op mul ipcslotc kmemlinks kmemcapacity
+op mul _tmp procc 5
+op sub ipcslotc ipcslotc _tmp
+op idiv ipcslotc ipcslotc 10
+
+commandcheck:
+
+set appi kmemlinks
+
+commandcheckloop:
+
+getlink app appi
+read command app 0
+jump commandcheckskip equal command 0
+op add callback @counter 1
+jump commandhandler always
+
+commandcheckskip:
+
+op add appi appi 1
+jump commandcheckloop lessThan appi procml
+jump commandcheck always
+stop
+
+kmemwrite:
+
+op idiv _bank index kmemcapacity
+op mod _bank _bank kmemlinks
+op mod _index index kmemcapacity
+getlink _bank _bank
+write val _bank _index
+set @counter km_callback
+
+kmemread:
+
+op idiv _bank index kmemcapacity
+op mod _bank _bank kmemlinks
+op mod _index index kmemcapacity
+getlink _bank _bank
+read val _bank _index
+set @counter km_callback
+
+commandhandler:
+
+#1 is request ipc sent to
+#2 is get my ipcs
+#3 is get specific message(deleting it in the process)
+#4 is spawn process
+#5 is request kill
+#6 get kernel version
+jump spawn equal command 4
+jump killproc equal command 5
+jump sendipc equal command 1
+jump listipc equal command 2
+jump getipcmsg equal command 3
+jump getver equal command 6
+set @counter callback
+getver:
+write ver app 1
+write -5 app 0
+set @counter callback
+sendipc:
+
+read tpid app 1
+set index 3
+set tprocfound 0
+op mul term procc 5
+
+tprocfindloop:
+
+op add km_callback @counter 1
+jump kmemread always
+op equal ste val 0
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+op equal pde val tpid
+op add index index 4
+op land istproc ste pde
+op or tprocfound istproc tprocfound
+jump tproccheckfail equal istproc 0
+op idiv tprocslot index 5
+op sub tprocslot tprocslot 1
+
+tproccheckfail:
+
+jump tprocfindloop lessThan index term
+jump tprocfound equal tprocfound 1
+write -4 app 0
+set @counter callback
+
+tprocfound:
+
+#op mul tprocstatusi tprocslot 5
+#op add index tprocstatusi 3
+#set val -1
+#op add km_callback @counter 1
+#jump kmemwrite always
+#op add index index 1
+#set val -1
+#op add km_callback @counter 1
+#jump kmemwrite always
+op add tprocapp tprocslot kmemlinks
+getlink tprocapp tprocapp
+write -5 app 0
+read m1 app 2
+read m2 app 3
+read m3 app 4
+read m4 app 5
+read m5 app 6
+read m6 app 7
+read m7 app 8
+op add wpid tpid 1
+op sub _tmp appi kmemlinks
+op mul spid _tmp 5
+op add index spid 4
+op add km_callback @counter 1
+jump kmemread always
+op add spid val 1
+op add ipccallback @counter 1
+jump writeipcmsg always
+write 1 tprocapp 63
+set @counter callback
+
+listipc:
+
+op sub _tmp appi kmemlinks
+op mul spid _tmp 5
+op add index spid 4
+op add km_callback @counter 1
+jump kmemread always
+op add spid val 1
+set t 1
+set i 0
+
+ipcfindmsgloop:
+
+op mul index i 10
+op mul _tmp procc 5
+op add index index _tmp
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+op add index index 1
+op equal cpi spid val
+op add km_callback @counter 1
+jump kmemread always
+jump ipcfindmsgskip equal cpi 0
+write val app t
+op add t t 1
+jump ipcfindcompleted greaterThanEq t 64
+
+ipcfindmsgskip:
+
+op add i i 1
+jump ipcfindmsgloop lessThan i ipcslotc
+
+ipcfindcompleted:
+write -5 app 0
+set @counter callback
+
+getipcmsg:
+read tid app 1
+op sub _tmp appi kmemlinks
+op mul spid _tmp 5
+op add index spid 4
+op add km_callback @counter 1
+jump kmemread always
+op add spid val 1
+set t 1
+set i 0
+set success 0
+ipcfetchmsgloop:
+
+op mul index i 10
+op mul _tmp procc 5
+op add index index _tmp
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+op add index index 1
+op equal cpi spid val
+op add km_callback @counter 1
+jump kmemread always
+op equal cid val tid
+op land fetchedcorrectipc cpi cid
+jump ipcfetchmsgskip equal fetchedcorrectipc 0
+op mul index i 10
+op mul _tmp procc 5
+op add index index _tmp
+op add km_callback @counter 1
+jump kmemread always
+op sub val val 1
+write val app 1
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+op sub val val 1
+write val app 2
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+write val app 3
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+write val app 4
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+write val app 5
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+write val app 6
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+write val app 7
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+write val app 8
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+write val app 9
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+write val app 10
+op mul index i 10
+op mul _tmp procc 5
+op add index index _tmp
+op add index index 1
+set val -1
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val -1
+op add km_callback @counter 1
+jump kmemwrite always
+write -5 app 0
+set success 1
+jump ipcfetchcomplete always
+
+ipcfetchmsgskip:
+
+op add i i 1
+jump ipcfetchmsgloop lessThan i ipcslotc
+
+ipcfetchcomplete:
+jump ipcfetchsuccesful equal success 1
+write -4 app 0
+ipcfetchsuccesful:
+set @counter callback
+spawn:
+
+read tnh app 1
+read tnl app 2
+set index 0
+set sprocfound 0
+op mul term procc 5
+
+sprocfindloop:
+
+op add km_callback @counter 1
+jump kmemread always
+op equal nhe val tnh
+op add index index 1
+op add km_callback @counter 1
+jump kmemread always
+op equal nle val tnl
+op add index index 2
+op add km_callback @counter 1
+jump kmemread always
+op equal ste val -1
+op add index index 2
+op land issproc nhe nle
+op land issproc issproc ste
+op or sprocfound issproc sprocfound
+jump sproccheckfail equal issproc 0
+op idiv sprocslot index 5
+op sub sprocslot sprocslot 1
+
+sproccheckfail:
+
+jump sprocfindloop lessThan index term
+jump sprocfound equal sprocfound 1
+write -4 app 0
+set @counter callback
+
+sprocfound:
+
+op mul sprocstatusi sprocslot 5
+op add index sprocstatusi 3
+set val 0
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val cpid
+write cpid app 1
+write cpid sprocapp 1
+op add km_callback @counter 1
+jump kmemwrite always
+op add cpid cpid 1
+op add sprocapp sprocslot kmemlinks
+getlink sprocapp sprocapp
+write -3 sprocapp 0
+write -5 app 0
+set @counter callback
+
+killproc:
+
+read tpid app 1
+set index 4
+set kprocfound 0
+op mul term procc 5
+
+kprocfindloop:
+
+op add km_callback @counter 1
+jump kmemread always
+op add index index 1
+op equal iskproc val tpid
+op or kprocfound iskproc kprocfound
+jump kproccheckfail equal iskproc 0
+op idiv kprocslot index 5
+op sub kprocslot kprocslot 1
+
+kproccheckfail:
+
+jump kprocfindloop lessThan index term
+jump kprocfound equal kprocfound 1
+write -4 app 0
+set @counter callback
+
+kprocfound:
+
+op mul kprocstatusi kprocslot 5
+op add index kprocstatusi 3
+set val -1
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val -1
+op add km_callback @counter 1
+jump kmemwrite always
+op add kprocapp kprocslot kmemlinks
+getlink kprocapp kprocapp
+write -2 kprocapp 0
+write -5 app 0
+set @counter callback
+
+writeipcmsg:
+
+op mul index procc 5
+op mul _tmp cipcmsgslot 10
+op add index index _tmp
+set val spid
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val wpid
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val cipcmsgid
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val m1
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val m2
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val m3
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val m4
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val m5
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val m6
+op add km_callback @counter 1
+jump kmemwrite always
+op add index index 1
+set val m7
+op add km_callback @counter 1
+jump kmemwrite always
+op add cipcmsgslot cipcmsgslot 1
+op mod cipcmsgslot cipcmsgslot ipcslotc
+op add cipcmsgid cipcmsgid 1
+set @counter ipccallback
+set nonce 0
