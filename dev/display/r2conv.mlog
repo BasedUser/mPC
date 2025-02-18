@@ -1,0 +1,746 @@
+set COPYRIGHT "r2conv - dumb terminal for rgpu2\n© 2025 BasedUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set SOURCELINK "https://github.com/BasedUser/mPC"
+set charsizex 8
+set charsizey 16
+set leftX 0
+set rightX 176
+set topY 176
+set bottomY 0
+set x leftX
+op sub safeRightX rightX charsizex
+op add safeRightX safeRightX 1
+op sub y topY charsizey
+loop:
+read read bank1 510
+read write bank1 511
+jump loop equal read write
+read data bank1 read
+op shr pass data 51
+jump doText equal pass 0
+doWrite:
+read write2 bank2 511
+op add write2n write2 1
+op mod write2n write2n 510
+hang:
+read read2 bank2 510
+jump hang equal read2 write2n
+write data bank2 write2
+write write2n bank2 511
+jump newLine greaterThanEq x safeRightX
+# these characters are considered special
+jump backSpace equal char 8
+jump newLine equal char 10
+jump verticalTab equal char 11
+jump carriageReturn equal char 13
+jump normalConvert greaterThan chars 0 # if we still have work to do, do it
+skip:
+op add read read 1
+op mod read read 510
+write read bank1 510
+jump loop always 0 0
+
+doText:
+op and flags data 0x7000000000000
+op and chars data 0xffffffffffff
+op shr kind flags 48
+op add @counter @counter kind
+jump normalConvert always 0 0    # ISOcharacter lookup and translation
+jump rawSegments always 0 0      # pass through up to 2 raw segment characters
+jump setDrawRect always 0 0      # tell the translator "hey actually we should draw text in this rect: (lx,ty,rx,by) at (x,y)" - internal command
+jump setDrawRectLong always 0 0  # same as above but [-512,512] range and only with rect
+jump -1 always 0 0
+jump -1 always 0 0
+jump -1 always 0 0
+jump -1 always 0 0
+jump skip always 0 0
+
+rawSegments:
+op and data chars 0x3ffffffff    # mask 34 bits
+jump doWrite always 0 0
+
+setDrawRect:
+op mod leftX chars 256
+op idiv chars chars 256
+op mod topY chars 256
+op idiv chars chars 256
+op mod rightX chars 256
+op sub safeRightX rightX charsizex
+op max safeRightX leftX safeRightX
+op add safeRightX safeRightX 1
+op idiv chars chars 256
+op mod bottomY chars 256
+op idiv chars chars 256
+op mod posX chars 256
+op mul offsetX posX charsizex
+op idiv chars chars 256
+op mod posY chars 256
+op add posY posY 1
+op mul offsetY posY charsizey
+op add x leftX offsetX        # set x to be leftX + character position
+op sub y topY offsetY         # set y to be topY + character position (well actually - due to mlog)
+set chars 0 # we won't be packing anything else this command
+packRect:
+op and data charsizey 511
+op shl data data 9
+op and packedX charsizex 511
+op add data data packedX
+op shl data data 10
+op and packedY y 1023
+op add data data packedY
+op shl data data 10
+op and packedX x 1023
+op add data data packedX
+op or data data 0x8000000000000
+jump doWrite always 0 0
+
+setDrawRectLong:
+op mod leftX chars 512
+op idiv chars chars 512
+op mod ~x chars 2
+op idiv chars chars 2
+op mul ~x ~x -512
+op add leftX ~x leftX
+op mod topY chars 512
+op idiv chars chars 512
+op mod ~y chars 2
+op idiv chars chars 2
+op mul ~y ~y -512
+op add topY ~y topY
+op mod rightX chars 512
+op sub safeRightX rightX charsizex
+op max safeRightX leftX safeRightX
+op add safeRightX safeRightX 1
+op idiv chars chars 512
+op mod ~x chars 2
+op idiv chars chars 2
+op mul ~x ~x -512
+op add rightX ~x rightX
+op mod bottomY chars 512
+op idiv chars chars 512
+op mod ~y chars 2
+op idiv chars chars 2
+op mul ~y ~y -512
+op add bottomY ~y bottomY
+set x leftX
+op sub y topY charsizey
+set chars 0 # we won't be packing anything else this command
+jump packRect always 0 0
+
+beep:
+sensor enabled door1 @enabled
+op xor enable enabled 1
+control enabled door1 enable
+jump nextChar always 0 0
+
+backSpace:
+set char 0 # this is jumped to by doWrite, stop infinite loops
+op sub x x charsizex
+op max x x leftX
+jump packRect always 0 0
+
+#tab:
+#op mul tabSize charsizex 4
+#op add x x tabSize
+#op add callback @counter 2
+#jump newLine greaterThanEq x safeRightX # jump if we fucked up due to the newline
+#jump packRect always 0 0  # forcefully pack a rect anyway
+
+tab: # 2-wide space
+set outSegs 0x0
+op shl chars chars 8
+op add chars chars 32 # replace tab with space
+jump endLookup always 0 0 # technically this char exists so end lookup here
+
+newLine: # prepare a newline
+set x leftX
+verticalTab:
+set char 0 # this is jumped to by doWrite, stop infinite loops
+op sub y y charsizey
+jump packRect greaterThanEq y bottomY
+set y topY
+jump packRect always 0 0
+
+# this function was scrapped because it could be handled by OS
+#formFeed: # clear the screen
+#set x leftX
+#op sub y topY charsizey
+#op ??? data ???? ??????????
+## this code is a bit more specialized so i'm willing to give it leeway
+## --- write bgrect
+#read write2 bank2 511
+#op add write2n write2 1
+#op mod write2n write2n 510
+#hang2:
+#read read2 bank2 510
+#jump hang2 equal read2 write2n
+#write data bank2 write2
+#write write2n bank2 511
+## --- end write bgrect
+#jump packRect always 0 0
+
+carriageReturn:
+set char 0 # this is jumped to by doWrite, stop infinite loops
+set x leftX
+jump packRect always 0 0
+
+endLookup: # daughter of normalConvert
+# we have found our character! bad news, it might be at the end of a line, with ≤3 chars remaining
+# we can never have 0 chars remaining because that's stupid, causes infinite loops and is 100% a misconfig
+# priority is to minimize character commands above all else
+op mul offset charsBuffered 17         # every character has 17 segments
+op shl segmentMask outSegs offset
+op xor data data segmentMask           # using xor because it'll be a dead giveaway if something's broken
+# we are going to print `charsLeft`+1 characters, but also we have a char 0
+op add charsBuffered charsBuffered 1
+op add x x charsizex
+# sanity check that our buffer actually increased in size in rgpu2's PoV
+op greaterThan sensedChars1 data 0x1ffff
+op greaterThan sensedChars2 data 0x3ffffffff
+op add sensedChars sensedChars1 sensedChars2
+op add sensedChars sensedChars 1
+jump noMismatch greaterThanEq sensedChars charsBuffered
+# *sighs* it looks like something's an empty character and is being pushed to rgpu2
+# right so we found `charsBuffered` is larger than `sensedChars`, which means a null was
+# attempted to be sent to rgpu2... but why is this a problem, you might ask?
+# thing is, rgpu doesn't know how to handle nulls, so the only reasonable course of action is
+# to end the command immediately
+# however we can't do that, or we'll lose the space
+# so let's cache the space back and see what happens
+op shl chars chars 8
+op add chars chars char
+op sub charsBuffered charsBuffered 1
+op sub x x charsizex
+jump doWrite always 0 0                    # force the write anyway because spaces
+noMismatch:
+jump doWrite greaterThanEq x safeRightX    # flush the message immediately if we hit the border
+jump doWrite greaterThanEq charsBuffered 3 # or if we have 3 characters buffered
+jump doWrite equal chars 0                 # or if there are no characters left
+jump nextChar always 0 0                   # else, write a new character
+
+normalConvert:
+# i need to actually explain what this part of the code does
+# so you know how koi8 is just ascii but russian? that makes it an 8bit encoding, which for most
+# intents and purposes is nice to have but also makes storing one character per double inefficient
+set data 0                             # null the ENTIRE data buffer, we will be replacing it
+set charsBuffered 0                    # we now have 0 characters
+nextChar:
+jump skip lessThanEq chars 0           # sanity check
+op and char chars 0xff
+jump 
+op shr chars chars 8                   # shift-right NOW because doing it later will be problematic
+# now, we have the entire state
+# refer to code above for further ascii parsing: `endLookup`, `newLine`, `carriageReturn`, `tab`
+op mul offset char 2
+op add @counter @counter offset
+jump nextChar always 0 0 # '\x00', normally this should not happen
+noop
+jump nextChar always 0 0 # '\x01'
+noop
+jump nextChar always 0 0 # '\x02'
+noop
+jump nextChar always 0 0 # '\x03'
+noop
+jump nextChar always 0 0 # '\x04'
+noop
+jump nextChar always 0 0 # '\x05'
+noop
+jump nextChar always 0 0 # '\x06'
+noop
+jump beep # '\a', attempt to flop a door
+noop
+jump doWrite always 0 0 # '\b'
+noop
+jump tab always 0 0 # '\t'
+noop
+jump doWrite always 0 0 # '\n', needs special treatment due to wrapping
+noop
+jump doWrite always 0 0 # '\v', goes down by 1 character - i remember this from `cat`ting /dev/random
+noop
+jump nextChar always 0 0 #jump formFeed always 0 0 # '\f', clears the screen
+noop
+jump doWrite always 0 0 # '\r'
+noop
+jump nextChar always 0 0 # '\x0e'
+noop
+jump nextChar always 0 0 # '\x0f'
+noop
+jump nextChar always 0 0 # '\x10'
+noop
+jump nextChar always 0 0 # '\x11'
+noop
+jump nextChar always 0 0 # '\x12'
+noop
+jump nextChar always 0 0 # '\x13'
+noop
+jump nextChar always 0 0 # '\x14'
+noop
+jump nextChar always 0 0 # '\x15'
+noop
+jump nextChar always 0 0 # '\x16'
+noop
+jump nextChar always 0 0 # '\x17'
+noop
+jump nextChar always 0 0 # '\x18'
+noop
+jump nextChar always 0 0 # '\x19'
+noop
+jump nextChar always 0 0 # '\x1a'
+noop
+noop # '\e'
+jump endLookup always 0 0
+jump nextChar always 0 0 # '\x1c'
+noop
+jump nextChar always 0 0 # '\x1d'
+noop
+jump nextChar always 0 0 # '\x1e'
+noop
+jump nextChar always 0 0 # '\x1f'
+noop
+set outSegs 0x0 # ' '
+jump endLookup always 0 0
+set outSegs 0x10004 # '!'
+jump endLookup always 0 0
+set outSegs 0x204 # '"'
+jump endLookup always 0 0
+set outSegs 0xaa3c # '#'
+jump endLookup always 0 0
+set outSegs 0xaabb # '$'
+jump endLookup always 0 0
+set outSegs 0xee99 # '%'
+jump endLookup always 0 0
+set outSegs 0x9371 # '&'
+jump endLookup always 0 0
+set outSegs 0x200 # "'"
+jump endLookup always 0 0
+set outSegs 0x1400 # '('
+jump endLookup always 0 0
+set outSegs 0x4100 # ')'
+jump endLookup always 0 0
+set outSegs 0xff00 # '*'
+jump endLookup always 0 0
+set outSegs 0xaa00 # '+'
+jump endLookup always 0 0
+set outSegs 0x4000 # ','
+jump endLookup always 0 0
+set outSegs 0x8800 # '-'
+jump endLookup always 0 0
+set outSegs 0x10000 # '.'
+jump endLookup always 0 0
+set outSegs 0x4400 # '/'
+jump endLookup always 0 0
+set outSegs 0x44ff # '0'
+jump endLookup always 0 0
+set outSegs 0x40c # '1'
+jump endLookup always 0 0
+set outSegs 0x8877 # '2'
+jump endLookup always 0 0
+set outSegs 0x83f # '3'
+jump endLookup always 0 0
+set outSegs 0x888c # '4'
+jump endLookup always 0 0
+set outSegs 0x90b3 # '5'
+jump endLookup always 0 0
+set outSegs 0x88fb # '6'
+jump endLookup always 0 0
+set outSegs 0xf # '7'
+jump endLookup always 0 0
+set outSegs 0x88ff # '8'
+jump endLookup always 0 0
+set outSegs 0x88bf # '9'
+jump endLookup always 0 0
+set outSegs 0x2001 # ':'
+jump endLookup always 0 0
+set outSegs 0x4001 # ';'
+jump endLookup always 0 0
+set outSegs 0x9400 # '<'
+jump endLookup always 0 0
+set outSegs 0x8830 # '='
+jump endLookup always 0 0
+set outSegs 0x4900 # '>'
+jump endLookup always 0 0
+set outSegs 0x12807 # '?'
+jump endLookup always 0 0
+set outSegs 0xaf7 # '@'
+jump endLookup always 0 0
+set outSegs 0x88cf # 'A'
+jump endLookup always 0 0
+set outSegs 0x2a3f # 'B'
+jump endLookup always 0 0
+set outSegs 0xf3 # 'C'
+jump endLookup always 0 0
+set outSegs 0x223f # 'D'
+jump endLookup always 0 0
+set outSegs 0x80f3 # 'E'
+jump endLookup always 0 0
+set outSegs 0x80c3 # 'F'
+jump endLookup always 0 0
+set outSegs 0x8fb # 'G'
+jump endLookup always 0 0
+set outSegs 0x88cc # 'H'
+jump endLookup always 0 0
+set outSegs 0x2233 # 'I'
+jump endLookup always 0 0
+set outSegs 0x7c # 'J'
+jump endLookup always 0 0
+set outSegs 0x94c0 # 'K'
+jump endLookup always 0 0
+set outSegs 0xf0 # 'L'
+jump endLookup always 0 0
+set outSegs 0x5cc # 'M'
+jump endLookup always 0 0
+set outSegs 0x11cc # 'N'
+jump endLookup always 0 0
+set outSegs 0xff # 'O'
+jump endLookup always 0 0
+set outSegs 0x88c7 # 'P'
+jump endLookup always 0 0
+set outSegs 0x10ff # 'Q'
+jump endLookup always 0 0
+set outSegs 0x98c7 # 'R'
+jump endLookup always 0 0
+set outSegs 0x88bb # 'S'
+jump endLookup always 0 0
+set outSegs 0x2203 # 'T'
+jump endLookup always 0 0
+set outSegs 0xfc # 'U'
+jump endLookup always 0 0
+set outSegs 0x44c0 # 'V'
+jump endLookup always 0 0
+set outSegs 0x50cc # 'W'
+jump endLookup always 0 0
+set outSegs 0x5500 # 'X'
+jump endLookup always 0 0
+set outSegs 0x88bc # 'Y'
+jump endLookup always 0 0
+set outSegs 0x4433 # 'Z'
+jump endLookup always 0 0
+set outSegs 0x2212 # '['
+jump endLookup always 0 0
+set outSegs 0x1100 # '\\'
+jump endLookup always 0 0
+set outSegs 0x2221 # ']'
+jump endLookup always 0 0
+set outSegs 0x5000 # '^'
+jump endLookup always 0 0
+set outSegs 0x30 # '_'
+jump endLookup always 0 0
+set outSegs 0x100 # '`'
+jump endLookup always 0 0
+set outSegs 0xa070 # 'a'
+jump endLookup always 0 0
+set outSegs 0xa0e0 # 'b'
+jump endLookup always 0 0
+set outSegs 0x8060 # 'c'
+jump endLookup always 0 0
+set outSegs 0x281c # 'd'
+jump endLookup always 0 0
+set outSegs 0xc060 # 'e'
+jump endLookup always 0 0
+set outSegs 0xaa02 # 'f'
+jump endLookup always 0 0
+set outSegs 0xa2a1 # 'g'
+jump endLookup always 0 0
+set outSegs 0xa0c0 # 'h'
+jump endLookup always 0 0
+set outSegs 0x2000 # 'i'
+jump endLookup always 0 0
+set outSegs 0x2260 # 'j'
+jump endLookup always 0 0
+set outSegs 0x3600 # 'k'
+jump endLookup always 0 0
+set outSegs 0xc0 # 'l'
+jump endLookup always 0 0
+set outSegs 0xa848 # 'm'
+jump endLookup always 0 0
+set outSegs 0xa040 # 'n'
+jump endLookup always 0 0
+set outSegs 0xa060 # 'o'
+jump endLookup always 0 0
+set outSegs 0x81c0 # 'p'
+jump endLookup always 0 0
+set outSegs 0xa281 # 'q'
+jump endLookup always 0 0
+set outSegs 0x8040 # 'r'
+jump endLookup always 0 0
+set outSegs 0x1810 # 's'
+jump endLookup always 0 0
+set outSegs 0x80e0 # 't'
+jump endLookup always 0 0
+set outSegs 0x2060 # 'u'
+jump endLookup always 0 0
+set outSegs 0x4040 # 'v'
+jump endLookup always 0 0
+set outSegs 0x5048 # 'w'
+jump endLookup always 0 0
+set outSegs 0xd800 # 'x'
+jump endLookup always 0 0
+set outSegs 0x4300 # 'y'
+jump endLookup always 0 0
+set outSegs 0xc020 # 'z'
+jump endLookup always 0 0
+set outSegs 0xa212 # '{'
+jump endLookup always 0 0
+set outSegs 0x2200 # '|'
+jump endLookup always 0 0
+set outSegs 0x2a21 # '}'
+jump endLookup always 0 0
+set outSegs 0xa85 # '~'
+jump endLookup always 0 0
+jump backSpace always 0 0 # '\x7f', treat as backspace
+noop
+set outSegs 0x8800 # '─'
+jump endLookup always 0 0
+set outSegs 0x2200 # '│'
+jump endLookup always 0 0
+set outSegs 0x2800 # '┌'
+jump endLookup always 0 0
+set outSegs 0xa000 # '┐'
+jump endLookup always 0 0
+set outSegs 0xa00 # '└'
+jump endLookup always 0 0
+set outSegs 0x8200 # '┘'
+jump endLookup always 0 0
+set outSegs 0x2a00 # '├'
+jump endLookup always 0 0
+set outSegs 0xa200 # '┤'
+jump endLookup always 0 0
+set outSegs 0xa800 # '┬'
+jump endLookup always 0 0
+set outSegs 0x8a00 # '┴'
+jump endLookup always 0 0
+set outSegs 0xaa00 # '┼'
+jump endLookup always 0 0
+set outSegs 0x8f87 # '▀'
+jump endLookup always 0 0
+set outSegs 0x1f878 # '▄'
+jump endLookup always 0 0
+set outSegs 0x1ffff # '█'
+jump endLookup always 0 0
+set outSegs 0xe3e1 # '▌'
+jump endLookup always 0 0
+set outSegs 0x3e1e # '▐'
+jump endLookup always 0 0
+set outSegs 0x4411 # '░'
+jump endLookup always 0 0
+set outSegs 0x4455 # '▒'
+jump endLookup always 0 0
+set outSegs 0x55dd # '▓'
+jump endLookup always 0 0
+set outSegs 0x2202 # '⌠'
+jump endLookup always 0 0
+set outSegs 0x55ff # '■'
+jump endLookup always 0 0
+set outSegs 0xff00 # '∙'
+jump endLookup always 0 0
+set outSegs 0x4440 # '√'
+jump endLookup always 0 0
+set outSegs 0x6a95 # '≈'
+jump endLookup always 0 0
+set outSegs 0xc10 # '≤'
+jump endLookup always 0 0
+set outSegs 0x8220 # '≥'
+jump endLookup always 0 0
+set outSegs 0x0 # nbsp
+jump endLookup always 0 0
+set outSegs 0x2220 # '⌡'
+jump endLookup always 0 0
+set outSegs 0xa06 # '°'
+jump endLookup always 0 0
+set outSegs 0xc02 # '²'
+jump endLookup always 0 0
+set outSegs 0xff00 # '·'
+jump endLookup always 0 0
+set outSegs 0x4488 # '÷'
+jump endLookup always 0 0
+set outSegs 0x8803 # '═'
+jump endLookup always 0 0
+set outSegs 0x220c # '║'
+jump endLookup always 0 0
+set outSegs 0x2a02 # '╒'
+jump endLookup always 0 0
+set outSegs 0xc060 # 'ё'
+jump endLookup always 0 0
+set outSegs 0x2808 # '╓'
+jump endLookup always 0 0
+set outSegs 0x220a # '╔'
+jump endLookup always 0 0
+set outSegs 0xa201 # '╕'
+jump endLookup always 0 0
+set outSegs 0xa808 # '╖'
+jump endLookup always 0 0
+set outSegs 0xa00f # '╗'
+jump endLookup always 0 0
+set outSegs 0xa02 # '╘'
+jump endLookup always 0 0
+set outSegs 0xa04 # '╙'
+jump endLookup always 0 0
+set outSegs 0xa00 # '╚'
+jump endLookup always 0 0
+set outSegs 0x8201 # '╛'
+jump endLookup always 0 0
+set outSegs 0x8a04 # '╜'
+jump endLookup always 0 0
+set outSegs 0x8805 # '╝'
+jump endLookup always 0 0
+set outSegs 0x2a02 # '╞'
+jump endLookup always 0 0
+set outSegs 0x220c # '╟'
+jump endLookup always 0 0
+set outSegs 0x2208 # '╠'
+jump endLookup always 0 0
+set outSegs 0xa201 # '╡'
+jump endLookup always 0 0
+set outSegs 0x88f3 # 'Ё'
+jump endLookup always 0 0
+set outSegs 0xa20c # '╢'
+jump endLookup always 0 0
+set outSegs 0xa00d # '╣'
+jump endLookup always 0 0
+set outSegs 0xa803 # '╤'
+jump endLookup always 0 0
+set outSegs 0xa808 # '╥'
+jump endLookup always 0 0
+set outSegs 0xa00b # '╦'
+jump endLookup always 0 0
+set outSegs 0x8803 # '╧'
+jump endLookup always 0 0
+set outSegs 0x8a04 # '╨'
+jump endLookup always 0 0
+set outSegs 0x8801 # '╩'
+jump endLookup always 0 0
+set outSegs 0xaa03 # '╪'
+jump endLookup always 0 0
+set outSegs 0xaa0c # '╫'
+jump endLookup always 0 0
+set outSegs 0xaa0f # '╬'
+jump endLookup always 0 0
+set outSegs 0x101 # '©'
+jump endLookup always 0 0
+set outSegs 0x6858 # 'ю'
+jump endLookup always 0 0
+set outSegs 0xa070 # 'а'
+jump endLookup always 0 0
+set outSegs 0x3410 # 'б'
+jump endLookup always 0 0
+set outSegs 0x12018 # 'ц'
+jump endLookup always 0 0
+set outSegs 0x2838 # 'д'
+jump endLookup always 0 0
+set outSegs 0xc060 # 'е'
+jump endLookup always 0 0
+set outSegs 0x5808 # 'ф'
+jump endLookup always 0 0
+set outSegs 0x2800 # 'г'
+jump endLookup always 0 0
+set outSegs 0xd800 # 'х'
+jump endLookup always 0 0
+set outSegs 0x6040 # 'и'
+jump endLookup always 0 0
+set outSegs 0x6041 # 'й'
+jump endLookup always 0 0
+set outSegs 0x3020 # 'к'
+jump endLookup always 0 0
+set outSegs 0x6000 # 'л'
+jump endLookup always 0 0
+set outSegs 0x6808 # 'м'
+jump endLookup always 0 0
+set outSegs 0x2a0c # 'н'
+jump endLookup always 0 0
+set outSegs 0xa060 # 'о'
+jump endLookup always 0 0
+set outSegs 0x2808 # 'п'
+jump endLookup always 0 0
+set outSegs 0xe180 # 'я'
+jump endLookup always 0 0
+set outSegs 0x81c0 # 'р'
+jump endLookup always 0 0
+set outSegs 0x8060 # 'с'
+jump endLookup always 0 0
+set outSegs 0xa848 # 'т'
+jump endLookup always 0 0
+set outSegs 0x4300 # 'у'
+jump endLookup always 0 0
+set outSegs 0xf800 # 'ж'
+jump endLookup always 0 0
+set outSegs 0xa1e0 # 'в'
+jump endLookup always 0 0
+set outSegs 0x3010 # 'ь'
+jump endLookup always 0 0
+set outSegs 0x3018 # 'ы'
+jump endLookup always 0 0
+set outSegs 0xc201 # 'з'
+jump endLookup always 0 0
+set outSegs 0x2078 # 'ш'
+jump endLookup always 0 0
+set outSegs 0xc100 # 'э'
+jump endLookup always 0 0
+set outSegs 0x12078 # 'щ'
+jump endLookup always 0 0
+set outSegs 0x2300 # 'ч'
+jump endLookup always 0 0
+set outSegs 0xb010 # 'ъ'
+jump endLookup always 0 0
+set outSegs 0xaade # 'Ю'
+jump endLookup always 0 0
+set outSegs 0x88cf # 'А'
+jump endLookup always 0 0
+set outSegs 0x90f3 # 'Б'
+jump endLookup always 0 0
+set outSegs 0x1221c # 'Ц'
+jump endLookup always 0 0
+set outSegs 0x8a4e # 'Д'
+jump endLookup always 0 0
+set outSegs 0x88f3 # 'Е'
+jump endLookup always 0 0
+set outSegs 0xaa87 # 'Ф'
+jump endLookup always 0 0
+set outSegs 0xc3 # 'Г'
+jump endLookup always 0 0
+set outSegs 0x5500 # 'Х'
+jump endLookup always 0 0
+set outSegs 0x44cc # 'И'
+jump endLookup always 0 0
+set outSegs 0x44cd # 'Й'
+jump endLookup always 0 0
+set outSegs 0x94c0 # 'К'
+jump endLookup always 0 0
+set outSegs 0x242c # 'Л'
+jump endLookup always 0 0
+set outSegs 0x25cc # 'М'
+jump endLookup always 0 0
+set outSegs 0x88cc # 'Н'
+jump endLookup always 0 0
+set outSegs 0xff # 'О'
+jump endLookup always 0 0
+set outSegs 0xcf # 'П'
+jump endLookup always 0 0
+set outSegs 0x450f # 'Я'
+jump endLookup always 0 0
+set outSegs 0x88c7 # 'Р'
+jump endLookup always 0 0
+set outSegs 0xf3 # 'С'
+jump endLookup always 0 0
+set outSegs 0x2203 # 'Т'
+jump endLookup always 0 0
+set outSegs 0x4500 # 'У'
+jump endLookup always 0 0
+set outSegs 0x7700 # 'Ж'
+jump endLookup always 0 0
+set outSegs 0x92f1 # 'В'
+jump endLookup always 0 0
+set outSegs 0x3210 # 'Ь'
+jump endLookup always 0 0
+set outSegs 0x321c # 'Ы'
+jump endLookup always 0 0
+set outSegs 0x883f # 'З'
+jump endLookup always 0 0
+set outSegs 0x22fc # 'Ш'
+jump endLookup always 0 0
+set outSegs 0x83f # 'Э'
+jump endLookup always 0 0
+set outSegs 0x122fc # 'Щ'
+jump endLookup always 0 0
+set outSegs 0x90c # 'Ч'
+jump endLookup always 0 0
+set outSegs 0x3211 # 'Ъ'
+jump endLookup always 0 0

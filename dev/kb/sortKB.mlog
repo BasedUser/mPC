@@ -1,0 +1,35 @@
+mainloop:
+set i 0
+
+getsort:
+getlink sorter i
+sensor item sorter @config
+jump skipsorter strictEqual item null
+control config sorter null 0 0 0
+sensor index item @id
+op mul mul i 16
+op add scancode index mul
+jump writechar always COPYRIGHT "sortKB - sorter keyboard\n© 2025 BasedUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+
+skipsorter:
+op add i i 1
+jump getsort lessThan i 9
+read flags cell1 0
+op mod left flags 16
+lookup item left left
+op idiv right flags 16
+lookup item right right
+control config sorter10 left 0 0 0
+control config sorter11 right 0 0 0
+jump mainloop always 0 0
+
+writechar:
+read write bank1 511
+op add write1 write 1
+op mod write1 write1 510
+waitrptr:
+read read bank1 510
+jump waitrptr equal read write1
+write scancode bank1 write
+write write1 bank1 511
+jump skipsorter always 0 0
