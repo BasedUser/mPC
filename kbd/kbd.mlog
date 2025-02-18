@@ -1,5 +1,5 @@
 #connect kbd to bank2 of kbconv as bank1 on kbd side
-set COPYRIGHT "kbd- kbconv driver for ukern\n© 2025 camelStyleUser. Released under GPLv3+ (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set COPYRIGHT "kbd- kbconv driver for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
 set SOURCELINK "https://github.com/BasedUser/mpc"
 set rpointer 0
 loop:

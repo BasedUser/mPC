@@ -13,7 +13,7 @@
 #-3 as command start
 #-4 as command is reporting error
 #-5 as command is response
-set COPYRIGHT "ukern – simple microkernel\n© 2025 camelStyleUser. Released under GPLv3+ (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set COPYRIGHT "ukern – simple microkernel\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
 set SOURCELINK "https://github.com/BasedUser/mPC"
 set ver 1
 set kmemlinks 8

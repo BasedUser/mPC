@@ -1,4 +1,4 @@
-set COPYRIGHT "ukern-test – a test program for ukern\n© 2025 camelStyleUser. Released under GPLv3+ (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set COPYRIGHT "ukern-test – a test program for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
 set SOURCELINK "https://github.com/BasedUser/mPC"
 loop:
 read c cell1 0
