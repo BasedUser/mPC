@@ -1,0 +1,90 @@
+set COPYRIGHT "ukern-drived – a drive driver program for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set SOURCELINK "https://github.com/BasedUser/mPC"
+loop:
+read c cell1 0
+jump ident equal c -1
+jump start equal c -3
+jump stop equal c -2
+jump valid equal c -5
+jump error equal c -4
+jump code equal e 1
+jump loop always
+ident:
+write 0 cell1 1#NULNULNULNULNULNUL
+write 0x647269766564 cell1 2#drived
+write 0 cell1 3
+write 0 cell1 0
+jump loop always
+stop:
+write 0 cell1 0
+set e 0
+set stage -1
+jump loop always
+start:
+write 0 cell1 0
+set e 1
+set stage 0
+jump loop always
+valid:
+write 0 cell1 0
+jump stagetwo notEqual stage 1
+read v cell1 1
+jump noipcmsg equal v -1
+set stage 2
+write 3 cell1 0
+jump loop always
+stagetwo:
+jump stage3 notEqual stage 2
+read wpid cell1 1
+read md cell1 4
+read pos cell1 5
+op idiv _bank pos 512
+op mod _ind pos 512
+op add _bank _bank 1
+getlink _bank _bank
+jump readdata equal md 0
+writedata:
+read val cell1 6
+write val _bank _ind
+read val _bank _ind
+write wpid cell1 1
+write val cell1 2
+write 0 cell1 3
+write 0 cell1 4
+write 0 cell1 5
+write 0 cell1 6
+write 0 cell1 7
+write 0 cell1 8
+write 1 cell1 0
+jump loop always
+readdata:
+read val _bank _ind
+write wpid cell1 1
+write val cell1 2
+write 0 cell1 3
+write 0 cell1 4
+write 0 cell1 5
+write 0 cell1 6
+write 0 cell1 7
+write 0 cell1 8
+write 1 cell1 0
+set stage 3
+jump loop always
+stage3:
+set stage 0
+jump loop always
+noipcmsg:
+write 0 cell1 63
+set stage 0
+jump loop always
+code:
+read msg cell1 63
+jump loop equal msg 0
+write -1 cell1 1
+write 2 cell1 0
+set stage 1
+jump loop always
+error:
+write 0 cell1 0
+set stage 0
+jump loop always
