@@ -56,6 +56,7 @@ write 0 cell1 6
 write 0 cell1 7
 write 0 cell1 8
 write 1 cell1 0
+set stage 3
 jump loop always
 readdata:
 read val _bank _ind
