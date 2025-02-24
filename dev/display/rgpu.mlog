@@ -5,26 +5,27 @@ op sub y 176 charsizey
 set bg %565666
 set bga 1
 set fg %ffffff
+set strokeText 1
 op pow bitpacker 2 -1074
 set read -1
-jump 111 always COPYRIGHT "rgpu2 - draw instruction breakout\n© 2025 BasedUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+jump 112 always COPYRIGHT "rgpu2 - draw instruction breakout\n© 2025 BasedUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
 read read bank1 510
 read write bank1 511
-jump 9 equal read write
-jump 13 lessThan read write
+jump 10 equal read write
+jump 14 lessThan read write
 read map bank1 read
 op shr drawType map 51
 op add @counter @counter drawType
-jump 20 always 0 0
-jump 92 always 0 0
-jump 124 always 0 0
-jump 139 always 0 0
+jump 21 always 0 0
+jump 93 always 0 0
+jump 125 always 0 0
+jump 140 always 0 0
 op and map map 0x7FFFFFFFFFFFF
 draw stroke 1 0 0 0 0 0
-jump 26 notEqual bga 1
+jump 27 notEqual bga 1
 draw col bg 0 0 0 0 0
 draw rect x y charsizex charsizey 0 0
-jump 82 equal map 0
+jump 83 equal map 0
 draw col fg 0 0 0 0 0
 op add cx x h2seg
 op add c1x cx 1
@@ -47,50 +48,50 @@ op and s map 0x2000
 op and t map 0x4000
 op and u map 0x8000
 op and dp map 0x10000
-jump 50 notEqual a 0x1
+jump 51 notEqual a 0x1
 draw rect x ry h2seg1 1 0 0
-jump 52 notEqual b 0x2
+jump 53 notEqual b 0x2
 draw rect cx ry h2seg1 1 0 0
-jump 54 notEqual c 0x4
+jump 55 notEqual c 0x4
 draw rect rx cy strokeText v2seg1 0 0
-jump 56 notEqual d 0x8
+jump 57 notEqual d 0x8
 draw rect rx ay strokeText v2seg1 0 0
-jump 58 notEqual e 0x10
+jump 59 notEqual e 0x10
 draw rect cx ay h2seg1 strokeText 0 0
-jump 60 notEqual f 0x20
+jump 61 notEqual f 0x20
 draw rect x ay h2seg1 strokeText 0 0
-jump 62 notEqual g 0x40
+jump 63 notEqual g 0x40
 draw rect x ay strokeText v2seg1 0 0
-jump 64 notEqual h 0x80
+jump 65 notEqual h 0x80
 draw rect x cy strokeText v2seg1 0 0
-jump 66 notEqual m 0x200
+jump 67 notEqual m 0x200
 draw rect cx cy strokeText v2seg1 0 0
-jump 68 notEqual p 0x800
+jump 69 notEqual p 0x800
 draw rect cx cy h2seg1 strokeText 0 0
-jump 70 notEqual s 0x2000
+jump 71 notEqual s 0x2000
 draw rect cx ay strokeText v2seg1 0 0
-jump 72 notEqual u 0x8000
+jump 73 notEqual u 0x8000
 draw rect x cy h2seg1 strokeText 0 0
-jump 74 notEqual dp 0x10000
+jump 75 notEqual dp 0x10000
 draw rect dx y 1 1 0 0
-jump 76 notEqual k 0x100
+jump 77 notEqual k 0x100
 draw line c1x cy x r1y 0 0
-jump 78 notEqual n 0x400
+jump 79 notEqual n 0x400
 draw line cx cy dx r1y 0 0
-jump 80 notEqual r 0x1000
+jump 81 notEqual r 0x1000
 draw line dx ay cx c1y 0 0
-jump 82 notEqual t 0x4000
+jump 83 notEqual t 0x4000
 draw line x ay c1x c1y 0 0
 op add x x charsizex
-jump 86 lessThanEq map 0x1ffff
+jump 87 lessThanEq map 0x1ffff
 op shr map map 17
-jump 23 always 0 0
+jump 24 always 0 0
 drawflush display1
 op add read read 1
 write read bank1 510
-jump 9 lessThan read 510
+jump 10 lessThan read 510
 write 0 bank1 510
-jump 9 always 0 0
+jump 10 always 0 0
 op and map map 0x7FFFFFFFFFFFF
 op mod x map 512
 op idiv map map 512
@@ -122,7 +123,7 @@ op add c1y cy 1
 op add ry ay vseg
 op add r1y ry 1
 op add x1 x 1
-jump 87 always 0 0
+jump 88 always 0 0
 op and map map 0x7FFFFFFFFFFFF
 op mod fg map 4294967296
 op mul fg fg bitpacker
@@ -137,26 +138,26 @@ op mod bgb map 64
 op div bgb bgb 64
 op idiv bga bga 64
 packcolor bg bgr bgg bgb bga
-jump 87 always 0 0
+jump 88 always 0 0
 op and map map 0x7FFFFFFFFFFFF
 op mod submode map 8
 op idiv map map 8
 op add @counter @counter submode
-jump 151 always 0 0
-jump 158 always 0 0
-jump 177 always 0 0
-jump 194 always 0 0
-jump 213 always 0 0
-jump 225 always 0 0
-jump 239 always 0 0
-jump 975 always 0 0
+jump 152 always 0 0
+jump 159 always 0 0
+jump 178 always 0 0
+jump 195 always 0 0
+jump 214 always 0 0
+jump 226 always 0 0
+jump 240 always 0 0
+jump 976 always 0 0
 op mod r map 256
 op idiv map map 256
 op idiv g map 256
 op idiv map map 256
 op idiv b map 256
 draw clear r g b 0 0 0
-jump 87 always 0 0
+jump 88 always 0 0
 op mod b1 map 512
 op idiv map map 512
 op mod ~b1 map 2
@@ -175,7 +176,7 @@ op mod b4 map 512
 op idiv b5 map 512
 draw stroke b5 0 0 0 0 0
 draw line b1 b2 b3 b4 0 0
-jump 87 always 0 0
+jump 88 always 0 0
 op mod b1 map 512
 op idiv map map 512
 op mod ~b1 map 2
@@ -192,7 +193,7 @@ op mod b3 map 512
 op idiv map map 512
 op mod b4 map 512
 draw rect b1 b2 b3 b4 0 0
-jump 87 always 0 0
+jump 88 always 0 0
 op mod b1 map 512
 op idiv map map 512
 op mod ~b1 map 2
@@ -211,7 +212,7 @@ op mod b4 map 512
 op idiv b5 map 512
 draw stroke b5 0 0 0 0 0
 draw lineRect b1 b2 b3 b4 0 0
-jump 87 always 0 0
+jump 88 always 0 0
 op mod b1 map 512
 op idiv map map 512
 op mod b2 map 512
@@ -223,7 +224,7 @@ op mod b4 map 724
 op idiv map map 724
 op mod b5 map 360
 draw poly b1 b2 b3 b4 b5 0
-jump 87 always 0 0
+jump 88 always 0 0
 op mod b1 map 512
 op idiv map map 512
 op mod b2 map 512
@@ -237,7 +238,7 @@ op mod b5 map 360
 op idiv b6 map 360
 draw stroke b6 0 0 0 0 0
 draw linePoly b1 b2 b3 b4 b5 0
-jump 87 always 0 0
+jump 88 always 0 0
 op mod start map 73
 op idiv map map 73
 op mod stop map 73
@@ -252,7 +253,7 @@ read x3 bank2 5
 read y3 bank2 6
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 0 stop
+jump 974 equal 0 stop
 read col bank2 7
 read x1 bank2 8
 read y1 bank2 9
@@ -262,7 +263,7 @@ read x3 bank2 12
 read y3 bank2 13
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 1 stop
+jump 974 equal 1 stop
 read col bank2 14
 read x1 bank2 15
 read y1 bank2 16
@@ -272,7 +273,7 @@ read x3 bank2 19
 read y3 bank2 20
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 2 stop
+jump 974 equal 2 stop
 read col bank2 21
 read x1 bank2 22
 read y1 bank2 23
@@ -282,7 +283,7 @@ read x3 bank2 26
 read y3 bank2 27
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 3 stop
+jump 974 equal 3 stop
 read col bank2 28
 read x1 bank2 29
 read y1 bank2 30
@@ -292,7 +293,7 @@ read x3 bank2 33
 read y3 bank2 34
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 4 stop
+jump 974 equal 4 stop
 read col bank2 35
 read x1 bank2 36
 read y1 bank2 37
@@ -302,7 +303,7 @@ read x3 bank2 40
 read y3 bank2 41
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 5 stop
+jump 974 equal 5 stop
 read col bank2 42
 read x1 bank2 43
 read y1 bank2 44
@@ -312,7 +313,7 @@ read x3 bank2 47
 read y3 bank2 48
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 6 stop
+jump 974 equal 6 stop
 read col bank2 49
 read x1 bank2 50
 read y1 bank2 51
@@ -322,7 +323,7 @@ read x3 bank2 54
 read y3 bank2 55
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 7 stop
+jump 974 equal 7 stop
 read col bank2 56
 read x1 bank2 57
 read y1 bank2 58
@@ -332,7 +333,7 @@ read x3 bank2 61
 read y3 bank2 62
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 8 stop
+jump 974 equal 8 stop
 read col bank2 63
 read x1 bank2 64
 read y1 bank2 65
@@ -342,7 +343,7 @@ read x3 bank2 68
 read y3 bank2 69
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 9 stop
+jump 974 equal 9 stop
 read col bank2 70
 read x1 bank2 71
 read y1 bank2 72
@@ -352,7 +353,7 @@ read x3 bank2 75
 read y3 bank2 76
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 10 stop
+jump 974 equal 10 stop
 read col bank2 77
 read x1 bank2 78
 read y1 bank2 79
@@ -362,7 +363,7 @@ read x3 bank2 82
 read y3 bank2 83
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 11 stop
+jump 974 equal 11 stop
 read col bank2 84
 read x1 bank2 85
 read y1 bank2 86
@@ -372,7 +373,7 @@ read x3 bank2 89
 read y3 bank2 90
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 12 stop
+jump 974 equal 12 stop
 read col bank2 91
 read x1 bank2 92
 read y1 bank2 93
@@ -382,7 +383,7 @@ read x3 bank2 96
 read y3 bank2 97
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 13 stop
+jump 974 equal 13 stop
 read col bank2 98
 read x1 bank2 99
 read y1 bank2 100
@@ -392,7 +393,7 @@ read x3 bank2 103
 read y3 bank2 104
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 14 stop
+jump 974 equal 14 stop
 read col bank2 105
 read x1 bank2 106
 read y1 bank2 107
@@ -402,7 +403,7 @@ read x3 bank2 110
 read y3 bank2 111
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 15 stop
+jump 974 equal 15 stop
 read col bank2 112
 read x1 bank2 113
 read y1 bank2 114
@@ -412,7 +413,7 @@ read x3 bank2 117
 read y3 bank2 118
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 16 stop
+jump 974 equal 16 stop
 read col bank2 119
 read x1 bank2 120
 read y1 bank2 121
@@ -422,7 +423,7 @@ read x3 bank2 124
 read y3 bank2 125
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 17 stop
+jump 974 equal 17 stop
 read col bank2 126
 read x1 bank2 127
 read y1 bank2 128
@@ -432,7 +433,7 @@ read x3 bank2 131
 read y3 bank2 132
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 18 stop
+jump 974 equal 18 stop
 read col bank2 133
 read x1 bank2 134
 read y1 bank2 135
@@ -442,7 +443,7 @@ read x3 bank2 138
 read y3 bank2 139
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 19 stop
+jump 974 equal 19 stop
 read col bank2 140
 read x1 bank2 141
 read y1 bank2 142
@@ -452,7 +453,7 @@ read x3 bank2 145
 read y3 bank2 146
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 20 stop
+jump 974 equal 20 stop
 read col bank2 147
 read x1 bank2 148
 read y1 bank2 149
@@ -462,7 +463,7 @@ read x3 bank2 152
 read y3 bank2 153
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 21 stop
+jump 974 equal 21 stop
 read col bank2 154
 read x1 bank2 155
 read y1 bank2 156
@@ -472,7 +473,7 @@ read x3 bank2 159
 read y3 bank2 160
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 22 stop
+jump 974 equal 22 stop
 read col bank2 161
 read x1 bank2 162
 read y1 bank2 163
@@ -482,7 +483,7 @@ read x3 bank2 166
 read y3 bank2 167
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 23 stop
+jump 974 equal 23 stop
 read col bank2 168
 read x1 bank2 169
 read y1 bank2 170
@@ -492,7 +493,7 @@ read x3 bank2 173
 read y3 bank2 174
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 24 stop
+jump 974 equal 24 stop
 read col bank2 175
 read x1 bank2 176
 read y1 bank2 177
@@ -502,7 +503,7 @@ read x3 bank2 180
 read y3 bank2 181
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 25 stop
+jump 974 equal 25 stop
 read col bank2 182
 read x1 bank2 183
 read y1 bank2 184
@@ -512,7 +513,7 @@ read x3 bank2 187
 read y3 bank2 188
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 26 stop
+jump 974 equal 26 stop
 read col bank2 189
 read x1 bank2 190
 read y1 bank2 191
@@ -522,7 +523,7 @@ read x3 bank2 194
 read y3 bank2 195
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 27 stop
+jump 974 equal 27 stop
 read col bank2 196
 read x1 bank2 197
 read y1 bank2 198
@@ -532,7 +533,7 @@ read x3 bank2 201
 read y3 bank2 202
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 28 stop
+jump 974 equal 28 stop
 read col bank2 203
 read x1 bank2 204
 read y1 bank2 205
@@ -542,7 +543,7 @@ read x3 bank2 208
 read y3 bank2 209
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 29 stop
+jump 974 equal 29 stop
 read col bank2 210
 read x1 bank2 211
 read y1 bank2 212
@@ -552,7 +553,7 @@ read x3 bank2 215
 read y3 bank2 216
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 30 stop
+jump 974 equal 30 stop
 read col bank2 217
 read x1 bank2 218
 read y1 bank2 219
@@ -562,7 +563,7 @@ read x3 bank2 222
 read y3 bank2 223
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 31 stop
+jump 974 equal 31 stop
 read col bank2 224
 read x1 bank2 225
 read y1 bank2 226
@@ -572,7 +573,7 @@ read x3 bank2 229
 read y3 bank2 230
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 32 stop
+jump 974 equal 32 stop
 read col bank2 231
 read x1 bank2 232
 read y1 bank2 233
@@ -582,7 +583,7 @@ read x3 bank2 236
 read y3 bank2 237
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 33 stop
+jump 974 equal 33 stop
 read col bank2 238
 read x1 bank2 239
 read y1 bank2 240
@@ -592,7 +593,7 @@ read x3 bank2 243
 read y3 bank2 244
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 34 stop
+jump 974 equal 34 stop
 read col bank2 245
 read x1 bank2 246
 read y1 bank2 247
@@ -602,7 +603,7 @@ read x3 bank2 250
 read y3 bank2 251
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 35 stop
+jump 974 equal 35 stop
 read col bank2 252
 read x1 bank2 253
 read y1 bank2 254
@@ -612,7 +613,7 @@ read x3 bank2 257
 read y3 bank2 258
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 36 stop
+jump 974 equal 36 stop
 read col bank2 259
 read x1 bank2 260
 read y1 bank2 261
@@ -622,7 +623,7 @@ read x3 bank2 264
 read y3 bank2 265
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 37 stop
+jump 974 equal 37 stop
 read col bank2 266
 read x1 bank2 267
 read y1 bank2 268
@@ -632,7 +633,7 @@ read x3 bank2 271
 read y3 bank2 272
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 38 stop
+jump 974 equal 38 stop
 read col bank2 273
 read x1 bank2 274
 read y1 bank2 275
@@ -642,7 +643,7 @@ read x3 bank2 278
 read y3 bank2 279
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 39 stop
+jump 974 equal 39 stop
 read col bank2 280
 read x1 bank2 281
 read y1 bank2 282
@@ -652,7 +653,7 @@ read x3 bank2 285
 read y3 bank2 286
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 40 stop
+jump 974 equal 40 stop
 read col bank2 287
 read x1 bank2 288
 read y1 bank2 289
@@ -662,7 +663,7 @@ read x3 bank2 292
 read y3 bank2 293
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 41 stop
+jump 974 equal 41 stop
 read col bank2 294
 read x1 bank2 295
 read y1 bank2 296
@@ -672,7 +673,7 @@ read x3 bank2 299
 read y3 bank2 300
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 42 stop
+jump 974 equal 42 stop
 read col bank2 301
 read x1 bank2 302
 read y1 bank2 303
@@ -682,7 +683,7 @@ read x3 bank2 306
 read y3 bank2 307
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 43 stop
+jump 974 equal 43 stop
 read col bank2 308
 read x1 bank2 309
 read y1 bank2 310
@@ -692,7 +693,7 @@ read x3 bank2 313
 read y3 bank2 314
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 44 stop
+jump 974 equal 44 stop
 read col bank2 315
 read x1 bank2 316
 read y1 bank2 317
@@ -702,7 +703,7 @@ read x3 bank2 320
 read y3 bank2 321
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 45 stop
+jump 974 equal 45 stop
 read col bank2 322
 read x1 bank2 323
 read y1 bank2 324
@@ -712,7 +713,7 @@ read x3 bank2 327
 read y3 bank2 328
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 46 stop
+jump 974 equal 46 stop
 read col bank2 329
 read x1 bank2 330
 read y1 bank2 331
@@ -722,7 +723,7 @@ read x3 bank2 334
 read y3 bank2 335
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 47 stop
+jump 974 equal 47 stop
 read col bank2 336
 read x1 bank2 337
 read y1 bank2 338
@@ -732,7 +733,7 @@ read x3 bank2 341
 read y3 bank2 342
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 48 stop
+jump 974 equal 48 stop
 read col bank2 343
 read x1 bank2 344
 read y1 bank2 345
@@ -742,7 +743,7 @@ read x3 bank2 348
 read y3 bank2 349
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 49 stop
+jump 974 equal 49 stop
 read col bank2 350
 read x1 bank2 351
 read y1 bank2 352
@@ -752,7 +753,7 @@ read x3 bank2 355
 read y3 bank2 356
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 50 stop
+jump 974 equal 50 stop
 read col bank2 357
 read x1 bank2 358
 read y1 bank2 359
@@ -762,7 +763,7 @@ read x3 bank2 362
 read y3 bank2 363
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 51 stop
+jump 974 equal 51 stop
 read col bank2 364
 read x1 bank2 365
 read y1 bank2 366
@@ -772,7 +773,7 @@ read x3 bank2 369
 read y3 bank2 370
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 52 stop
+jump 974 equal 52 stop
 read col bank2 371
 read x1 bank2 372
 read y1 bank2 373
@@ -782,7 +783,7 @@ read x3 bank2 376
 read y3 bank2 377
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 53 stop
+jump 974 equal 53 stop
 read col bank2 378
 read x1 bank2 379
 read y1 bank2 380
@@ -792,7 +793,7 @@ read x3 bank2 383
 read y3 bank2 384
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 54 stop
+jump 974 equal 54 stop
 read col bank2 385
 read x1 bank2 386
 read y1 bank2 387
@@ -802,7 +803,7 @@ read x3 bank2 390
 read y3 bank2 391
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 55 stop
+jump 974 equal 55 stop
 read col bank2 392
 read x1 bank2 393
 read y1 bank2 394
@@ -812,7 +813,7 @@ read x3 bank2 397
 read y3 bank2 398
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 56 stop
+jump 974 equal 56 stop
 read col bank2 399
 read x1 bank2 400
 read y1 bank2 401
@@ -822,7 +823,7 @@ read x3 bank2 404
 read y3 bank2 405
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 57 stop
+jump 974 equal 57 stop
 read col bank2 406
 read x1 bank2 407
 read y1 bank2 408
@@ -832,7 +833,7 @@ read x3 bank2 411
 read y3 bank2 412
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 58 stop
+jump 974 equal 58 stop
 read col bank2 413
 read x1 bank2 414
 read y1 bank2 415
@@ -842,7 +843,7 @@ read x3 bank2 418
 read y3 bank2 419
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 59 stop
+jump 974 equal 59 stop
 read col bank2 420
 read x1 bank2 421
 read y1 bank2 422
@@ -852,7 +853,7 @@ read x3 bank2 425
 read y3 bank2 426
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 60 stop
+jump 974 equal 60 stop
 read col bank2 427
 read x1 bank2 428
 read y1 bank2 429
@@ -862,7 +863,7 @@ read x3 bank2 432
 read y3 bank2 433
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 61 stop
+jump 974 equal 61 stop
 read col bank2 434
 read x1 bank2 435
 read y1 bank2 436
@@ -872,7 +873,7 @@ read x3 bank2 439
 read y3 bank2 440
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 62 stop
+jump 974 equal 62 stop
 read col bank2 441
 read x1 bank2 442
 read y1 bank2 443
@@ -882,7 +883,7 @@ read x3 bank2 446
 read y3 bank2 447
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 63 stop
+jump 974 equal 63 stop
 read col bank2 448
 read x1 bank2 449
 read y1 bank2 450
@@ -892,7 +893,7 @@ read x3 bank2 453
 read y3 bank2 454
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 64 stop
+jump 974 equal 64 stop
 read col bank2 455
 read x1 bank2 456
 read y1 bank2 457
@@ -902,7 +903,7 @@ read x3 bank2 460
 read y3 bank2 461
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 65 stop
+jump 974 equal 65 stop
 read col bank2 462
 read x1 bank2 463
 read y1 bank2 464
@@ -912,7 +913,7 @@ read x3 bank2 467
 read y3 bank2 468
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 66 stop
+jump 974 equal 66 stop
 read col bank2 469
 read x1 bank2 470
 read y1 bank2 471
@@ -922,7 +923,7 @@ read x3 bank2 474
 read y3 bank2 475
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 67 stop
+jump 974 equal 67 stop
 read col bank2 476
 read x1 bank2 477
 read y1 bank2 478
@@ -932,7 +933,7 @@ read x3 bank2 481
 read y3 bank2 482
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 68 stop
+jump 974 equal 68 stop
 read col bank2 483
 read x1 bank2 484
 read y1 bank2 485
@@ -942,7 +943,7 @@ read x3 bank2 488
 read y3 bank2 489
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 69 stop
+jump 974 equal 69 stop
 read col bank2 490
 read x1 bank2 491
 read y1 bank2 492
@@ -952,7 +953,7 @@ read x3 bank2 495
 read y3 bank2 496
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 70 stop
+jump 974 equal 70 stop
 read col bank2 497
 read x1 bank2 498
 read y1 bank2 499
@@ -962,7 +963,7 @@ read x3 bank2 502
 read y3 bank2 503
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
-jump 973 equal 71 stop
+jump 974 equal 71 stop
 read col bank2 504
 read x1 bank2 505
 read y1 bank2 506
@@ -973,7 +974,7 @@ read y3 bank2 510
 draw col col 0 0 0 0 0
 draw triangle x1 y1 x2 y2 x3 y3
 draw col fg 0 0 0 0 0
-jump 87 always 72 stop
+jump 88 always 72 stop
 op mod b1 map 512
 op idiv map map 512
 op mod b2 map 512
@@ -988,12 +989,12 @@ set b6 map
 op mul b5 b5 2
 op add @counter @counter b5
 lookup block image b6
-jump 996 always 0 0
+jump 997 always 0 0
 lookup unit image b6
-jump 996 always 0 0
+jump 997 always 0 0
 lookup item image b6
-jump 996 always 0 0
+jump 997 always 0 0
 lookup liquid image b6
-jump 996 always 0 0
+jump 997 always 0 0
 draw image b1 b2 image b3 b4 0
-jump 87 always 0 0
+jump 88 always 0 0
