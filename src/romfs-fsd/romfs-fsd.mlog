@@ -78,7 +78,7 @@ read type metad 0
 read len metad 1#get amount of entries in the dir
 op and len len 0xff
 read par metad 2#get parent
-op and par par 0x3ff
+op and par par 0xff#yes i know this limits us to 256 objects
 jump dwait_reset_end_ret notEqual type 0x64#check for char 'd'
 op equal n2v name2 0
 op equal n3v name3 0
@@ -190,7 +190,7 @@ read type metad 0
 read len metad 1#get amount of entries in the dir
 op and len len 0xff
 read par metad 2#get parent
-op and par par 0x3ff
+op and par par 0xff
 jump dwait_reset_end_ret notEqual type 0x64#check for char 'd'
 jump dwait_reset_end_ret greaterThanEqual name1 len
 set i name1
