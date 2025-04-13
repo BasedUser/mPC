@@ -16,7 +16,7 @@ def check_out_path(tpath,name,par):
 		file=tpath.open("rb")
 		bin=file.read()
 		file.close()
-		val=[chr(0x100|int(i)) for i in bin]
+		val=[chr(0x400|int(i)) for i in bin]
 		list.insert(0,["f",tpath.stat().st_size,"".join(val)])
 		return list[0]
 if len(sys.argv)<2:
@@ -32,10 +32,10 @@ for obj in list:
 strings=[]
 for obj in list:
 	if obj[0]=="d":
-		arr=["".join([chr(0x100|ord(e[0][i])) if i<len(e[0]) else chr(0) for i in range(18)])+chr(e[1]) for e in obj[3]]
-		strings.append("d"+chr(0x100|obj[1])+chr(0xf000|obj[2])+"".join(arr))
+		arr=["".join([chr(0x400|ord(e[0][i])) if i<len(e[0]) else chr(0) for i in range(18)])+chr(e[1]) for e in obj[3]]
+		strings.append("d"+chr(0x400|obj[1])+chr(0x400|obj[2])+"".join(arr))
 	else:
-		strings.append("f"+chr(0xf000|obj[1])+obj[2])
+		strings.append("f"+chr(0x400|obj[1])+obj[2])
 index=0
 for string in strings:
 	print(f"set e{index} \"{string}\"")
