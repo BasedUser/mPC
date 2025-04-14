@@ -32,10 +32,10 @@ for obj in list:
 strings=[]
 for obj in list:
 	if obj[0]=="d":
-		arr=["".join([chr(0x100|ord(e[0][(i//6)*6+5-(i%6)])) if (i//6)*6+5-(i%6)<len(e[0]) else chr(0x100) if i<len(e[0]) else chr(0x100) for i in range(18)])+chr(0x100|e[1]) for e in obj[3]]
-		strings.append("d"+chr(0x100|obj[1])+chr(0x100|obj[2])+"".join(arr))
+		arr=["".join([chr(0x100|ord(e[0][(i//6)*6+5-(i%6)])) if (i//6)*6+5-(i%6)<len(e[0]) else chr(0x100) if i<len(e[0]) else chr(0x100) for i in range(18)])+chr(0x6000|e[1]) for e in obj[3]]
+		strings.append("d"+chr(0x6000|obj[1])+chr(0x6000|obj[2])+"".join(arr))
 	else:
-		strings.append("f"+chr(0x100|obj[1])+obj[2])
+		strings.append("f"+chr(0x6000|obj[1])+obj[2])
 index=0
 for string in strings:
 	print(f"set e{index} \"{string}\"")
