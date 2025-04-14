@@ -68,10 +68,10 @@ jump dwait_reset_end_ret lessThan handle 0
 read type metad handle
 op add ind handle 1
 read len metad ind#get amount of entries in the dir
-op and len len 0xfff
+op sub len len 0x5000
 op add ind handle 2
 read par metad ind#get parent
-op and par par 0xfff
+op sub par par 0x5000
 jump dwait_reset_end_ret notEqual type 0x64#check for char 'd'
 op equal n2v name2 0
 op equal n3v name3 0
@@ -123,7 +123,7 @@ op add ind ind 1
 jump go_deeper_get_n3 lessThan ci 6
 jump skip_go_deeper_loop notEqual tmp name3
 read retval metad ind#after the 18 chars of name we get the file ptr
-op and retval retval 0xfff
+op sub retval retval 0x5000
 jump dwait_reset_end_ret always
 skip_go_deeper_loop:
 op add i i 1
@@ -136,7 +136,7 @@ read type metad handle
 jump dwait_reset_end_ret notEqual type 0x66#check if this is actually a file
 op add ind handle 1
 read len metad ind
-op and len len 0xfff
+op sub len len 0x5000
 jump dwait_reset_end_ret greaterThanEq name1 len
 jump dwait_reset_end_ret lessThan name1 0
 op add i name1 2
@@ -157,7 +157,7 @@ jump dwait_reset_end_ret always
 control_object_get_len:
 op add ind handle 1
 read retval metad ind#char 1 always stores len
-op and retval retval 0xfff
+op sub retval retval 0x5000
 jump dwait_reset_end_ret always
 control_object_get_type:
 read retval metad handle
@@ -167,10 +167,10 @@ set retval -1
 read type metad handle
 op add ind handle 1
 read len metad ind#get amount of entries in the dir
-op and len len 0xfff
+op sub len len 0x5000
 op add ind handle 2
 read par metad ind#get parent
-op and par par 0xfff
+op sub par par 0x5000#start at U+5000
 jump dwait_reset_end_ret notEqual type 0x64#check for char 'd'
 jump dwait_reset_end_ret greaterThanEq name1 len
 set i name1

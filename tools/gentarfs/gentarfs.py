@@ -43,9 +43,9 @@ for ind,obj in enumerate(list):
 strings=[]
 for ind,obj in enumerate(list):
 	if obj[0]=="d":
-		arr=["".join([chr(0x100|ord(e[0][(i//6)*6+5-(i%6)])) if (i//6)*6+5-(i%6)<len(e[0]) else chr(0x100) if i<len(e[0]) else chr(0x100) for i in range(18)])+chr(0x6000|pos[e[1]]) for e in obj[3]]
-		strings.append("d"+chr(0x6000|obj[1])+chr(0x6000|pos[obj[2]])+"".join(arr))
+		arr=["".join([chr(0x100|ord(e[0][(i//6)*6+5-(i%6)])) if (i//6)*6+5-(i%6)<len(e[0]) else chr(0x100) if i<len(e[0]) else chr(0x100) for i in range(18)])+chr(0x5000+pos[e[1]]) for e in obj[3]]
+		strings.append("d"+chr(0x5000+obj[1])+chr(0x5000+pos[obj[2]])+"".join(arr))
 	else:
-		strings.append("f"+chr(0x6000|obj[1])+obj[2])
+		strings.append("f"+chr(0x5000+obj[1])+obj[2])
 string="".join(strings)
 print(f"set fs \"{string}\"")
