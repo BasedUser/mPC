@@ -173,10 +173,14 @@ jump get_var_name always
 read vn proc vn
 read metad processor2 vn
 jump control_object_get_len equal name1 0#get len if control type is 0
+jump control_object_get_type equal name1 1#get len if control type is 0
 jump dwait_reset_end_ret always
 control_object_get_len:
 read retval metad 1#char 1 always stores len
 op and retval retval 0xfff
+jump dwait_reset_end_ret always
+control_object_get_type:
+read retval metad 0
 jump dwait_reset_end_ret always
 list_dir:
 set retval -1
