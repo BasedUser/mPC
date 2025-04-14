@@ -1,6 +1,7 @@
 set COPYRIGHT "ukern-test-ng – a test program for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
 set SOURCELINK "https://github.com/BasedUser/mPC"
 loop:
+set fsdpid 4
 read c cell1 0
 jump ident equal c -1
 jump stop equal c -2
@@ -25,7 +26,7 @@ control enabled switch1 1 0 0 0
 write 0 cell1 0
 set e 1
 set stage 0
-set metastage 0
+set metastage 1
 jump loop always
 valid:
 write 0 cell1 0
@@ -37,26 +38,80 @@ write 3 cell1 0
 jump loop always
 stage2:
 jump stage3 greaterThanEq stage 3
-jump handleinit equal metastage 0
-jump handleanyc equal metastage 1
-jump handlechar equal metastage 2
-jump handletermd equal metastage 3
+jump handleinit equal metastage 1
+jump handlegotfile equal metastage 2
+jump handlegotfilechar equal metastage 3
+jump handlefiletermd equal metastage 4
+jump handleanyc equal metastage 5
+jump handlechar equal metastage 6
+jump handletermd equal metastage 7
 jump loop always
 stage3:
 set stage 0
 jump loop always
-handleinit:
-set metastage 1
+handlegotfile:
+read handl cell1 4
+jump handlegotfilefail equal handl -1
+set metastage 3
+set stage 3
+set indx 0
+write indx cell1 4
+write handl cell1 3
+write 2 cell1 2#readfile(banner.txt,0)
+write fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlegotfilefail:
+set metastage 5
 set stage 3
 write 0 cell1 2
 write 3 cell1 1
+write 1 cell1 0
+jump loop always
+handlegotfilechar:
+read byte cell1 4
+jump handlegotfilecharbreak equal byte -1
+set stage 3
+set metastage 4
+read val cell1 4
+write val cell1 2
+write 2 cell1 1
+write 1 cell1 0
+jump loop always
+handlegotfilecharbreak:
+set stage 3
+set metastage 5
+write 0 cell1 2
+write 3 cell1 1
+write 1 cell1 0
+jump loop always
+handlefiletermd:
+op add indx indx 1
+set stage 3
+set metastage 3
+write indx cell1 4
+write handl cell1 3
+write 2 cell1 2#readfile(banner.txt,indx)
+write fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handleinit:
+set metastage 2
+set stage 3
+write 0x72656e6e6162 cell1 4#banner
+write 0x7478742e cell1 5#.txt
+write 0 cell1 6#NUL
+write 0 cell1 7
+write 0 cell1 3#hack, root dir is always 0 on romfs
+write 1 cell1 2#go_deeper
+write fsdpid cell1 1
 write 1 cell1 0
 jump loop always
 handleanyc:
 set stage 3
 read resp cell1 4
 jump handlenoc equal resp 0
-set metastage 2
+set metastage 6
 write 1 cell1 2
 write 3 cell1 1
 write 1 cell1 0
@@ -68,7 +123,7 @@ write 1 cell1 0
 jump loop always
 handlechar:
 set stage 3
-set metastage 3
+set metastage 7
 read val cell1 4
 write val cell1 2
 write 2 cell1 1
@@ -76,7 +131,7 @@ write 1 cell1 0
 jump loop always
 handletermd:
 set stage 3
-set metastage 1
+set metastage 5
 write 0 cell1 2
 write 3 cell1 1
 write 1 cell1 0
