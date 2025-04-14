@@ -1,0 +1,244 @@
+#processor1 is main lookup proc
+#processor2 is file content proc
+#processor3 is object next ptr proc
+set WARNING "TODO:do go_deeper/read/write/create/stat/remove_file/list_folder/control_object"
+set COPYRIGHT "ukern-tarfs-fsd – a tar-fs driver program for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set SOURCELINK "https://github.com/BasedUser/mPC"
+loop:
+read c cell1 0
+jump ident equal c -1
+jump start equal c -3
+jump stop equal c -2
+jump valid equal c -5
+jump error equal c -4
+jump code equal e 1
+jump loop always
+ident:
+write 0 cell1 1#NULNULNULNULNULNUL
+write 0x667364 cell1 2#fsd
+write 0 cell1 3
+write 0 cell1 0
+jump loop always
+stop:
+write 0 cell1 0
+set e 0
+set stage -1
+jump loop always
+start:
+read metad processor1 "fs"
+write 0 cell1 0
+set e 1
+set stage 0
+jump loop always
+valid:
+write 0 cell1 0
+jump stagetwo notEqual stage 1
+read v cell1 1
+jump noipcmsg equal v -1
+set stage 2
+write 3 cell1 0
+jump loop always
+stagetwo:
+jump stage3 notEqual stage 2
+read wpid cell1 1
+read act cell1 4
+read handle cell1 5
+read name1 cell1 6
+read name2 cell1 7
+read name3 cell1 8
+read objtype cell1 9
+jump get_root_dir_handle equal act 0
+jump go_deeper equal act 1
+jump read_file equal act 2
+jump write_file equal act 3
+jump create_object equal act 4
+jump remove_object equal act 5
+jump list_dir equal act 6
+jump control_object equal act 7
+jump get_id equal act 255#get the type of fs
+get_id:
+set retval 0x746172
+jump dwait_reset_end_ret always
+get_root_dir_handle:
+set retval 0
+jump dwait_reset_end_ret always
+go_deeper:#traverse the fd given to us
+set retval -1
+jump dwait_reset_end_ret lessThan handle 0
+read type metad handle
+op add ind handle 1
+read len metad ind#get amount of entries in the dir
+op and len len 0xfff
+op add ind handle 2
+read par metad ind#get parent
+op and par par 0xfff
+jump dwait_reset_end_ret notEqual type 0x64#check for char 'd'
+op equal n2v name2 0
+op equal n3v name3 0
+op equal t1v name1 0x2e
+op equal p1v name1 0x2e2e
+op and nv n2v n3v
+op and tv t1v nv
+op and pv p1v nv
+set retval handle
+jump dwait_reset_end_ret equal tv 1#if we request . return the handle
+set retval par
+jump dwait_reset_end_ret equal pv 1#if we request .. return the parent
+set i 0
+go_deeper_loop:
+op mul ind i 19
+op add ind ind 3
+op add ind ind handle
+set tmp 0
+set ci 0
+go_deeper_get_n1:
+read tmpv metad ind
+op and tmpv tmpv 0xff
+op shl tmp tmp 8
+op or tmp tmp tmpv
+op add ci ci 1
+op add ind ind 1
+jump go_deeper_get_n1 lessThan ci 6
+jump skip_go_deeper_loop notEqual tmp name1
+set tmp 0
+set ci 0
+go_deeper_get_n2:
+read tmpv metad ind
+op and tmpv tmpv 0xff
+op shl tmp tmp 8
+op or tmp tmp tmpv
+op add ci ci 1
+op add ind ind 1
+jump go_deeper_get_n2 lessThan ci 6
+jump skip_go_deeper_loop notEqual tmp name2
+set tmp 0
+set ci 0
+go_deeper_get_n3:
+read tmpv metad ind
+op and tmpv tmpv 0xff
+op shl tmp tmp 8
+op or tmp tmp tmpv
+op add ci ci 1
+op add ind ind 1
+jump go_deeper_get_n3 lessThan ci 6
+jump skip_go_deeper_loop notEqual tmp name3
+read retval metad ind#after the 18 chars of name we get the file ptr
+op and retval retval 0xfff
+jump dwait_reset_end_ret always
+skip_go_deeper_loop:
+op add i i 1
+jump go_deeper_loop lessThan i len
+set retval -1
+jump dwait_reset_end_ret always
+read_file:
+set retval -1
+read type metad handle
+jump dwait_reset_end_ret notEqual type 0x66#check if this is actually a file
+op add ind handle 1
+read len metad ind
+op and len len 0xfff
+jump dwait_reset_end_ret greaterThanEq name1 len
+jump dwait_reset_end_ret lessThan name1 0
+op add i name1 2
+op add i i handle
+read retval metad i
+op and retval retval 0xff
+jump dwait_reset_end_ret always
+write_file:#this is a rom fs after all
+create_object:#this is a rom fs after all
+remove_object:#this is a rom fs after all
+set retval -1
+jump dwait_reset_end_ret always
+control_object:
+set retval -1
+jump control_object_get_len equal name1 0#get len if control type is 0
+jump control_object_get_type equal name1 1#get len if control type is 0
+jump dwait_reset_end_ret always
+control_object_get_len:
+op add ind handle 1
+read retval metad ind#char 1 always stores len
+op and retval retval 0xfff
+jump dwait_reset_end_ret always
+control_object_get_type:
+read retval metad handle
+jump dwait_reset_end_ret always
+list_dir:
+set retval -1
+read type metad handle
+op add ind handle 1
+read len metad ind#get amount of entries in the dir
+op and len len 0xfff
+op add ind handle 2
+read par metad ind#get parent
+op and par par 0xfff
+jump dwait_reset_end_ret notEqual type 0x64#check for char 'd'
+jump dwait_reset_end_ret greaterThanEq name1 len
+set i name1
+op mul ind i 19
+op add ind ind 3
+op add ind ind handle
+set tmp 0
+set ci 0
+list_dir_get_n1:
+read tmpv metad ind
+op and tmpv tmpv 0xff
+op shl tmp tmp 8
+op or tmp tmp tmpv
+op add ci ci 1
+op add ind ind 1
+jump go_deeper_get_n1 lessThan ci 6
+write tmp cell1 3
+set tmp 0
+set ci 0
+list_dir_get_n2:
+read tmpv metad ind
+op and tmpv tmpv 0xff
+op shl tmp tmp 8
+op or tmp tmp tmpv
+op add ci ci 1
+op add ind ind 1
+jump go_deeper_get_n2 lessThan ci 6
+write tmp cell1 4
+set tmp 0
+set ci 0
+list_dir_get_n3:
+read tmpv metad ind
+op and tmpv tmpv 0xff
+op shl tmp tmp 8
+op or tmp tmp tmpv
+op add ci ci 1
+op add ind ind 1
+jump go_deeper_get_n3 lessThan ci 6
+write tmp cell1 5
+read ptr metad ind#after the 18 chars of name we get the file ptr
+op and ptr ptr 0xff
+write ptr cell1 6
+set retval 0
+jump dwait_reset_end_ret always
+
+dwait_reset_end_ret:
+set stage 3
+write wpid cell1 1
+write retval cell1 2
+write 1 cell1 0
+jump loop always
+#handle_init:
+stage3:
+set stage 0
+jump loop always
+noipcmsg:
+write 0 cell1 63
+set stage 0
+jump loop always
+code:
+read msg cell1 63
+jump loop equal msg 0
+jump loop notEqual stage 0
+write -1 cell1 1
+write 2 cell1 0
+set stage 1
+jump loop always
+error:
+write 0 cell1 0
+set stage 0
+jump loop always
