@@ -1,0 +1,785 @@
+#processor1 is main lookup proc
+#processor2 is file content proc
+#processor3 is object next ptr proc
+set COPYRIGHT "ukern-ramfs-fsd – a ram-fs driver program for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set SOURCELINK "https://github.com/BasedUser/mPC"
+set fatbanks 1#512 blocks(512*1)
+set dbanks 64#512 blocks(8*64)
+set freeonboot 1#whether to make all fat entries free or not, turns the fs into tmpfs or an fs in nvram respectively
+loop:
+read c cell1 0
+jump ident equal c -1
+jump start equal c -3
+jump stop equal c -2
+jump valid equal c -5
+jump error equal c -4
+jump code equal e 1
+jump loop always
+ident:
+write 0 cell1 1#NULNULNULNULNULNUL
+write 0x667364 cell1 2#fsd
+write 0 cell1 3
+write 0 cell1 0
+jump loop always
+stop:
+write 0 cell1 0
+set e 0
+set stage -1
+jump loop always
+start:
+write 0 cell1 0
+set e 1
+set stage 0
+jump start_no_freeonboot equal freeonboot 0
+set i 0
+op mul termi fatbanks 512
+freeonboot_loop:
+op idiv bank i 512
+op mod ind i 512
+getlink bank bank
+write 0xfffffffe bank ind#mark as free
+op add i i 1
+jump freeonboot_loop lessThan i termi
+start_no_freeonboot:
+jump loop always
+valid:
+write 0 cell1 0
+jump stagetwo notEqual stage 1
+read v cell1 1
+jump noipcmsg equal v -1
+set stage 2
+write 3 cell1 0
+jump loop always
+stagetwo:
+jump stage3 notEqual stage 2
+read wpid cell1 1
+read act cell1 4
+read handle cell1 5
+read name1 cell1 6
+read name2 cell1 7
+read name3 cell1 8
+read objtype cell1 9
+jump get_root_dir_handle equal act 0
+jump go_deeper equal act 1
+jump read_file equal act 2
+jump write_file equal act 3
+jump create_object equal act 4
+jump remove_object equal act 5
+jump list_dir equal act 6
+jump control_object equal act 7
+jump get_id equal act 255#get the type of fs
+get_id:
+set retval 0x72616d#ram
+jump dwait_reset_end_ret always
+get_root_dir_handle:
+set retval 0
+jump dwait_reset_end_ret always
+go_deeper:#traverse the fd given to us
+set retval -1
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op add ind ind 1
+op mul termind block 64
+op add termind termind 64
+op and type typelen 0xff00000000
+op and len len 0xffffffff
+jump dwait_reset_end_ret notEqual type 0x6400000000
+read par bank ind
+op equal n2v name2 0
+op equal n3v name3 0
+op equal t1v name1 0x2e
+op equal p1v name1 0x2e2e
+op and nv n2v n3v
+op and tv t1v nv
+op and pv p1v nv
+set retval handle
+jump dwait_reset_end_ret equal tv 1#if we request . return the handle
+set retval par
+jump dwait_reset_end_ret equal pv 1#if we request .. return the parent
+set i 0
+op add ind ind 3#pad for easier life
+go_deeper_loop:
+read n1 bank ind
+op add ind ind 1
+read n2 bank ind
+op add ind ind 1
+read n3 bank ind
+op add ind ind 1
+read retval bank ind
+jump skip_go_deeper_loop notEqual n1 name1
+jump skip_go_deeper_loop notEqual n2 name2
+jump skip_go_deeper_loop notEqual n3 name3
+jump dwait_reset_end_ret always
+skip_go_deeper_loop:
+op add ind ind 1
+op add i i 1
+jump go_deeper_skip_handle_nblock lessThan ind termind
+#we have ran out of space time to get a new block or fail
+op idiv bank handle 512
+op mod find handle 512
+getlink bank bank
+read handle bank find
+jump go_deeper_fail equal handle 0xffffffff
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+op mul termind block 64
+op add termind termind 64
+go_deeper_skip_handle_nblock:
+jump go_deeper_loop lessThan i len
+go_deeper_fail:
+set ret -1
+jump dwait_reset_end_ret always
+read_file:
+set retval -1
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op mul termind block 64
+op add termind termind 64
+op and type typelen 0xff00000000
+op and len len 0xffffffff
+jump dwait_reset_end_ret notEqual type 0x6600000000
+jump dwait_reset_end_ret lessThan name1 0
+jump dwait_reset_end_ret greaterThanEq name1 len
+op add rind name1 6#since 1 double is used for type and len
+op idiv blocks rind 384
+op sub blocks blocks 1#since block 0 is already loaded
+read_file_loop:
+jump exit_read_file_loop lessThanEq blocks 0
+op idiv bank handle 512
+op mod find handle 512
+getlink bank bank
+read handle bank find
+jump read_file_fail equal handle 0xffffffff
+op sub blocks blocks 1
+op sub rind rind 384
+jump read_file_loop always
+exit_read_file_loop:
+op idiv dind rind 6
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+op add ind ind dind
+read val bank ind
+op mod byte rind 6
+op mul byte byte 8
+op shr retval val byte
+op and retval retval 0xff
+jump dwait_reset_end_ret always
+read_file_fail:
+set retval -1
+jump dwait_reset_end_ret always
+write_file:
+set retval -1
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op mul termind block 64
+op add termind termind 64
+op and type typelen 0xff00000000
+op and len len 0xffffffff
+jump dwait_reset_end_ret notEqual type 0x6600000000
+jump dwait_reset_end_ret lessThan name1 0
+jump dwait_reset_end_ret greaterThan name1 len
+jump write_file_add_char equal name1 len
+op add rind name1 6#since 1 double is used for type and len
+op idiv blocks rind 384
+op sub blocks blocks 1#since block 0 is already loaded
+write_file_loop:
+jump exit_write_file_loop lessThanEq blocks 0
+op idiv bank handle 512
+op mod find handle 512
+getlink bank bank
+read handle bank find
+jump write_file_fail equal handle 0xffffffff
+op sub blocks blocks 1
+op sub rind rind 384
+jump write_file_loop always
+exit_write_file_loop:
+op idiv dind rind 6
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+op add ind ind dind
+read val bank ind
+op mod byte rind 6
+op mul byte byte 8
+op and nval name2 0xff
+op shl nval nval byte
+op or val val nval
+write val bank ind
+op sub retval 0 name2
+jump dwait_reset_end_ret always
+write_file_fail:
+set retval -1
+jump dwait_reset_end_ret always
+write_file_add_char:
+set bhandle handle
+op add rind len 6#since 1 double is used for type and len
+op idiv blocks rind 384
+op sub blocks blocks 1#since block 0 is already loaded
+write_file_add_char_loop:
+jump exit_write_file_add_char_loop lessThanEq blocks 0
+op idiv bank handle 512
+op mod find handle 512
+getlink bank bank
+read handle bank find
+jump write_file_fail equal handle 0xffffffff
+op sub blocks blocks 1
+op sub rind rind 384
+jump write_file_add_char_loop always
+exit_write_file_add_char_loop:
+op add test len 6
+op div test test 384
+op ceil test2 test
+jump write_file_add_char_allocate_block strictEqual test test2
+op idiv dind rind 6
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+op add ind ind dind
+read val bank ind
+op mod byte rind 6
+op mul byte byte 8
+op and nval name2 0xff
+op shl nval nval byte
+op or val val nval
+write val bank ind
+jump write_file_add_char_incr_len always
+write_file_add_char_allocate_block:
+set i 0
+write_file_allocate_for_cont_loop:
+op idiv bank i 512
+op mod ind i 512
+getlink bank bank
+read pot bank ind
+jump write_file_skip_allocate_for_cont_loop notEqual pot 0xfffffffe
+write 0xffffffff bank ind
+jump write_file_allocated_for_cont always
+write_file_skip_allocate_for_cont_loop:
+jump write_file_allocate_for_cont_loop lessThan i termin
+jump write_file_fail always
+write_file_allocated_for_cont:#just add it to the FAT and we're good to go
+op idiv bank handle 512
+op mod ind handle 512
+getlink bank bank
+write i bank ind
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+write name2 bank ind
+#fallthrough intentional
+write_file_add_char_incr_len:
+set handle bhandle
+op idiv bank handle 512
+op mod ind handle 512
+getlink bank bank
+write i bank ind
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op add typelen typelen 1#probably wont overflow
+write typelen bank ind
+op and retval typelen 0xffffffff
+jump dwait_reset_end_ret always
+create_object:#to create an object we must first make an entry in the directory then allocate one block for the empty file
+set bhandle handle
+set retval -1
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op mul termind block 64
+op add termind termind 64
+op and type typelen 0xff00000000
+op and len len 0xffffffff
+jump dwait_reset_end_ret notEqual type 0x6400000000
+op add len len 1
+op or typelen type len
+write typelen bank ind
+op add ind ind 1
+read par bank ind
+op add ind ind 3#since there are two bytes of padding
+op add test len 1#add 1 "entry" to account for header
+op div test test 16#16 entries fit in a block
+op ceil test2 test
+jump create_object_allocate_for_dir strictEqual test test2
+op add rind len 1#since 1 "entry" is metadata
+op idiv blocks rind 16
+op sub blocks blocks 1#since block 0 is already loaded
+create_object_ff_loop:
+jump exit_create_object_ff_loop lessThanEq blocks 0
+op idiv bank handle 512
+op mod find handle 512
+getlink bank bank
+read handle bank find
+jump create_object_fail equal handle 0xffffffff
+op sub blocks blocks 1
+op sub rind rind 16
+jump create_object_ff_loop always
+exit_create_object_ff_loop:
+op mul ttind rind 4
+op idiv bank handle 8
+op add tbank bank fatbanks
+op mod block handle 8
+getlink tbank tbank
+op mul tind block 64
+op add tind tind ttind
+jump create_object_actually always
+create_object_allocate_for_dir:
+set i 0
+op mul termin fatbanks 512
+create_object_allocate_for_dir_loop:
+op idiv bank i 512
+op mod ind i 512
+getlink bank bank
+read pot bank ind
+jump create_object_skip_allocate_for_dir_loop notEqual pot 0xfffffffe
+write 0xffffffff bank ind
+jump create_object_allocated_for_dir always
+create_object_skip_allocate_for_dir_loop:
+jump create_object_allocate_for_dir_loop lessThan i termin
+jump create_object_fail always
+create_object_allocated_for_dir:#now that we have a block we need to link it to the rest
+create_object_link_to_dir_loop:
+op idiv bank handle 512
+op mod ind handle 512
+getlink bank bank
+read nval bank ind
+jump create_object_linked_to_dir_loop equal nval 0xffffffff
+set handle nval
+jump create_object_link_to_dir loop always 
+create_object_linked_to_dir_loop:
+write i bank ind
+op idiv bank i 8
+op add tbank bank fatbanks
+op mod block i 8
+getlink tbank tbank
+op mul tind block 64
+create_object_actually:#we have the index and bank where to write directory entry to in tbank and tind
+set i 0
+create_object_allocate_for_obj_loop:
+op idiv bank i 512
+op mod ind i 512
+getlink bank bank
+read pot bank ind
+jump create_object_skip_allocate_for_obj_loop notEqual pot 0xfffffffe
+write 0xffffffff bank ind
+jump create_object_allocated_for_obj always
+create_object_skip_allocate_for_obj_loop:
+jump create_object_allocate_for_obj_loop lessThan i termin
+jump create_object_fail always
+create_object_allocated_for_obj:#just write metadata and we're good to go
+op idiv bank i 8
+op add bank bank fatbanks
+op mod block i 8
+getlink bank bank
+op mul ind block 64
+op shr objtype objtype 32
+write objtype bank ind
+jump create_object_actually_not_dir notEqual objtype 0x6400000000
+op add ind ind 1
+write bhandle bank ind
+create_object_actually_not_dir:
+write name1 tbank tind
+op add tind tind 1
+write name2 tbank tind
+op add tind tind 1
+write name3 tbank tind
+op add tind tind 1
+write i tbank tind
+set retval 0
+jump dwait_reset_end_ret always
+create_object_fail:
+set retval -1
+jump dwait_reset_end_ret always
+remove_object:#you can only remove an object if you know it's name from the directory, also erases object on disk in this case
+set retval -1
+set bhandle handle
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op add ind ind 1
+op mul termind block 64
+op add termind termind 64
+op and type typelen 0xff00000000
+op and len len 0xffffffff
+jump dwait_reset_end_ret notEqual type 0x6400000000
+read par bank ind
+set i 0
+op add ind ind 3#pad for easier life
+remove_object_loop:
+read n1 bank ind
+op add ind ind 1
+read n2 bank ind
+op add ind ind 1
+read n3 bank ind
+op add ind ind 1
+jump skip_remove_object_loop notEqual n1 name1
+jump skip_remove_object_loop notEqual n2 name2
+jump skip_remove_object_loop notEqual n3 name3
+read handle bank ind
+jump exit_remove_object_loop always
+skip_remove_object_loop:
+op add ind ind 1
+op add i i 1
+jump remove_object_skip_handle_nblock lessThan ind termind
+#we have ran out of space time to get a new block or fail
+op idiv bank handle 512
+op mod find handle 512
+getlink bank bank
+read handle bank find
+jump remove_object_fail equal handle 0xffffffff
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+op mul termind block 64
+op add termind termind 64
+remove_object_skip_handle_nblock:
+jump remove_object_loop lessThan i len
+remove_object_fail:
+set ret -1
+jump dwait_reset_end_ret always
+exit_remove_object_loop:
+set retval -1
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op add ind ind 1
+op mul termind block 64
+op add termind termind 64
+op and type typelen 0xff00000000
+op and len len 0xffffffff
+jump remove_object_delete_dir equal type 0x6400000000#if it is a directory we need to make sure that it's empty before continuing
+remove_file_loop:
+op idiv bank handle 512
+op mod ind handle 512
+getlink bank bank
+read nval bank ind
+write 0xfffffffe bank ind
+jump exit_remove_file_loop equal nval 0xffffffff
+set handle nval
+jump remove_file_loop always
+exit_remove_file_loop:
+jump remove_object_delete_entry always
+remove_object_delete_dir:
+jump remove_object_fail greaterThan len 0#cant remove a non-empty directory
+remove_dir_loop:
+op idiv bank handle 512
+op mod ind handle 512
+getlink bank bank
+read nval bank ind
+write 0xfffffffe bank ind
+jump exit_remove_dir_loop equal nval 0xffffffff
+set handle nval
+jump remove_dir_loop always
+exit_remove_dir_loop:
+remove_object_delete_entry:#now time to delete the entry
+set handle bhandle
+set ohandle -1
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op add ind ind 1
+op mul termind block 64
+op add termind termind 64
+op and type typelen 0xff00000000
+op and len len 0xffffffff
+set shift 0
+read par bank ind
+set i 0
+op add ind ind 3#pad for easier life
+remove_entry_loop:
+read n1 bank ind
+op add ind ind 1
+read n2 bank ind
+op add ind ind 1
+read n3 bank ind
+op add ind ind 1
+read ptr bank ind
+jump remove_entry_shift_entry_left equal shift 1
+jump skip_remove_entry_loop notEqual n1 name1
+jump skip_remove_entry_loop notEqual n2 name2
+jump skip_remove_entry_loop notEqual n3 name3
+set shift 1
+op sub ind ind 3
+write -1 bank ind
+op add ind ind 1
+write -1 bank ind
+op add ind ind 1
+write -1 bank ind
+op add ind ind 1
+write -1 bank ind
+jump skip_remove_entry_loop always
+remove_entry_shift_entry_left:
+op sub ind ind 3
+write -1 bank ind
+op add ind ind 1
+write -1 bank ind
+op add ind ind 1
+write -1 bank ind
+op add ind ind 1
+write -1 bank ind
+op div test ind 64
+op ceil test2 test
+jump skip_remove_entry_shift_entry_to_prev_block notEqual test test2#unless we are at the start of a block, dont move to prev block
+op idiv obank ohandle 8
+op add obank obank fatbanks
+op mod oblock ohandle 8
+getlink obank obank
+op mul oind oblock 64
+op add oind oind 60#write to the last entry of the block
+write n1 obank oind
+op add oind oind 1
+write n2 obank oind
+op add oind oind 1
+write n3 obank oind
+op add oind oind 1
+write ptr obank oind
+jump skip_remove_entry_loop always
+skip_remove_entry_shift_entry_to_prev_block:
+op sub ind ind 7#3+4
+write n1 bank ind
+op add ind ind 1
+write n2 bank ind
+op add ind ind 1
+write n3 bank ind
+op add ind ind 1
+write ptr bank ind
+op add ind ind 4
+skip_remove_entry_loop:
+op add ind ind 1
+op add i i 1
+jump remove_entry_skip_handle_nblock lessThan ind termind
+set ohandle handle
+#we have ran out of space time to get a new block or fail
+op idiv bank handle 512
+op mod find handle 512
+getlink bank bank
+read handle bank find
+jump remove_object_fail equal handle 0xffffffff
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+op mul termind block 64
+op add termind termind 64
+remove_entry_skip_handle_nblock:
+jump remove_entry_loop lessThan i len
+set ohandle handle
+set handle bhandle
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op and len typelen 0xffffffff
+op and type typelen 0xff00000000
+op sub len len 1
+op add test len 1#to account for the metadata
+op div test test 16
+op ceil test2 test
+jump remove_entry_skip_remove_last_block notEqual test2 test
+op idiv fbank ohandle 512
+op mod find ohandle 512
+getlink fbank fbank
+write 0xfffffffe fbank find
+remove_entry_skip_remove_last_block:
+op or typelen type len
+write typelen bank ind
+set retval 0
+jump dwait_reset_end_ret always
+control_object:
+set retval -1
+jump control_object_get_len equal name1 0#get len if control type is 0
+jump control_object_get_type equal name1 1#get type if control type is 1
+jump control_object_shrink_file equal name1 2#shrink the file if control type is 2
+jump dwait_reset_end_ret always
+control_object_get_len:
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op and retval typelen 0xffffffff
+jump dwait_reset_end_ret always
+control_object_get_type:
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op and retval typelen 0xff00000000
+op shr retval retval 32
+jump dwait_reset_end_ret always
+control_object_shrink_file:
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op and len typelen 0xffffffff
+op and type typelen 0xff00000000
+jump dwait_reset_end_ret notEqual type 0x6600000000
+jump dwait_reset_end_ret greaterThan name2 len
+set retval 0
+jump dwait_reset_end_ret equal name2 len
+op or typelen type name2
+write typelen bank ind
+op add rind name2 6#since 1 double is used for type and len
+op idiv blocks rind 384
+op sub blocks blocks 1#since block 0 is already loaded
+control_object_shrink_ff_loop:
+jump exit_control_object_shrink_ff_loop lessThanEq blocks 0
+op idiv bank handle 512
+op mod find handle 512
+getlink bank bank
+read handle bank find
+jump control_object_fail equal handle 0xffffffff
+op sub blocks blocks 1
+op sub rind rind 384
+jump control_object_shrink_ff_loop always
+exit_control_object_shrink_ff_loop:
+op idiv fbank handle 512
+op mod find handle 512
+getlink fbank fbank
+read nval fbank find
+jump dwait_reset_end_ret equal nval 0xffffffff#this is the last block of the file anyway
+set handle nval
+control_object_shrink_free_loop:
+op idiv fbank handle 512
+op mod find handle 512
+getlink fbank fbank
+read nval fbank find
+write 0xfffffffe fbank find
+jump exit_control_object_shrink_free_loop equal nval 0xffffffff
+set handle nval
+jump control_object_shrink_free_loop always
+exit_control_object_shrink_free_loop:
+jump dwait_reset_end_ret always
+control_object_fail:
+set retval -1
+jump dwait_reset_end_ret always
+list_dir:
+set bhandle handle
+set retval -1
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+read typelen bank ind
+op mul termind block 64
+op add termind termind 64
+op and type typelen 0xff00000000
+op and len len 0xffffffff
+jump dwait_reset_end_ret notEqual type 0x6400000000
+jump dwait_reset_end_ret lessThan name1 0
+jump dwait_reset_end_ret greaterThanEq name1 len
+op add rind name1 1#since 1 "entry" is metadata
+op idiv blocks rind 16
+op sub blocks blocks 1#since block 0 is already loaded
+list_dir_ff_loop:
+jump exit_list_dir_ff_loop lessThanEq blocks 0
+op idiv bank handle 512
+op mod find handle 512
+getlink bank bank
+read handle bank find
+jump list_dir_fail equal handle 0xffffffff
+op sub blocks blocks 1
+op sub rind rind 16
+jump list_dir_ff_loop always
+exit_list_dir_ff_loop:
+op mul tind rind 4
+op idiv bank handle 8
+op add bank bank fatbanks
+op mod block handle 8
+getlink bank bank
+op mul ind block 64
+op add ind ind tind
+read retval bank ind
+op add ind ind 1
+read n2 bank ind
+op add ind ind 1
+read n3 bank ind
+op add ind ind 1
+read ptr bank ind
+write n2 cell1 3
+write n3 cell1 4
+write ptr cell1 5
+jump dwait_reset_end_ret always
+list_dir_fail:
+set retval -1
+jump dwait_reset_end_ret always
+
+dwait_reset_end_ret:
+set stage 3
+write wpid cell1 1
+write retval cell1 2
+write 1 cell1 0
+jump loop always
+#handle_init:
+stage3:
+set stage 0
+jump loop always
+noipcmsg:
+write 0 cell1 63
+set stage 0
+jump loop always
+code:
+read msg cell1 63
+jump loop equal msg 0
+jump loop notEqual stage 0
+write -1 cell1 1
+write 2 cell1 0
+set stage 1
+jump loop always
+error:
+write 0 cell1 0
+set stage 0
+jump loop always
+fail_counter:
+set retval -1
+jump dwait_reset_end_ret always
