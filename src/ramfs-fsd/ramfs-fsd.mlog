@@ -41,6 +41,13 @@ getlink bank bank
 write 0xfffffffe bank ind#mark as free
 op add i i 1
 jump freeonboot_loop lessThan i termi
+getlink bank 0
+write 0xffffffff bank 0
+getlink bank fatbanks
+write 0x6400000000 bank 0
+write 0 bank 1
+write 0 bank 2
+write 0 bank 3
 start_no_freeonboot:
 jump loop always
 valid:
@@ -135,7 +142,7 @@ op add termind termind 64
 go_deeper_skip_handle_nblock:
 jump go_deeper_loop lessThan i len
 go_deeper_fail:
-set ret -1
+set retval -1
 jump dwait_reset_end_ret always
 read_file:
 set retval -1
@@ -346,6 +353,7 @@ op sub rind rind 16
 jump create_object_ff_loop always
 exit_create_object_ff_loop:
 op mul ttind rind 4
+op sub ttind ttind 4
 op idiv bank handle 8
 op add tbank bank fatbanks
 op mod block handle 8
@@ -385,6 +393,7 @@ getlink tbank tbank
 op mul tind block 64
 create_object_actually:#we have the index and bank where to write directory entry to in tbank and tind
 set i 0
+op mul termin fatbanks 512
 create_object_allocate_for_obj_loop:
 op idiv bank i 512
 op mod ind i 512
@@ -394,6 +403,7 @@ jump create_object_skip_allocate_for_obj_loop notEqual pot 0xfffffffe
 write 0xffffffff bank ind
 jump create_object_allocated_for_obj always
 create_object_skip_allocate_for_obj_loop:
+op add i i 1
 jump create_object_allocate_for_obj_loop lessThan i termin
 jump create_object_fail always
 create_object_allocated_for_obj:#just write metadata and we're good to go
@@ -402,9 +412,9 @@ op add bank bank fatbanks
 op mod block i 8
 getlink bank bank
 op mul ind block 64
-op shr objtype objtype 32
-write objtype bank ind
-jump create_object_actually_not_dir notEqual objtype 0x6400000000
+op shl typelen objtype 32
+write typelen bank ind
+jump create_object_actually_not_dir notEqual typelen 0x6400000000
 op add ind ind 1
 write bhandle bank ind
 create_object_actually_not_dir:
@@ -470,7 +480,7 @@ op add termind termind 64
 remove_object_skip_handle_nblock:
 jump remove_object_loop lessThan i len
 remove_object_fail:
-set ret -1
+set retval -1
 jump dwait_reset_end_ret always
 exit_remove_object_loop:
 set retval -1

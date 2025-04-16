@@ -1,5 +1,6 @@
 set COPYRIGHT "ukern-test-ng – a test program for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
 set SOURCELINK "https://github.com/BasedUser/mPC"
+set fsisw 1
 loop:
 set fsdpid 4
 read c cell1 0
@@ -45,18 +46,111 @@ jump handlefiletermd equal metastage 4
 jump handleanyc equal metastage 5
 jump handlechar equal metastage 6
 jump handletermd equal metastage 7
+jump handlecreatefile equal metastage 100
+jump handlegetfile equal metastage 101
+jump handlewchar1 equal metastage 102
+jump handlewchar2 equal metastage 103
+jump handlewchar3 equal metastage 104
+jump handlewchar4 equal metastage 105
+jump handlegethandleagain equal metastage 106
+set stage -1
+jump loop always
+handlecreatefile:
+set stage 3
+set metastage 101
+write 0x72656e6e6162 cell1 4#banner
+write 0x7478742e cell1 5#.txt
+write 0 cell1 6#NUL
+write 0x66 cell1 7#filey type
+write 0 cell1 3#hack, root dir is always 0 on ramfs
+write 4 cell1 2#create_object
+write fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlegetfile:
+set stage 3
+set metastage 102
+write 0x72656e6e6162 cell1 4#banner
+write 0x7478742e cell1 5#.txt
+write 0 cell1 6#NUL
+write 0 cell1 7
+write 0 cell1 3#hack, root dir is always 0 on ramfs
+write 1 cell1 2#go_deeper
+write fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlewchar1:
+read handle cell1 4
+set stage 3
+set metastage 103
+write 0 cell1 4#0
+write 0x73 cell1 5#s
+write 0 cell1 6#NUL
+write 0 cell1 7
+write handle cell1 3
+write 3 cell1 2#write_file
+write fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlewchar2:
+set stage 3
+set metastage 104
+write 1 cell1 4#0
+write 0x75 cell1 5#u
+write 0 cell1 6#NUL
+write 0 cell1 7
+write handle cell1 3
+write 3 cell1 2#write_file
+write fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlewchar3:
+set stage 3
+set metastage 105
+write 2 cell1 4#0
+write 0x73 cell1 5#s
+write 0 cell1 6#NUL
+write 0 cell1 7
+write handle cell1 3
+write 3 cell1 2#write_file
+write fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlewchar4:
+set stage 3
+set metastage 106
+write 3 cell1 4#0
+write 0x0a cell1 5#\n
+write 0 cell1 6#NUL
+write 0 cell1 7
+write handle cell1 3
+write 3 cell1 2#write_file
+write fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlegethandleagain:
+set stage 3
+set metastage 2
+write 0x72656e6e6162 cell1 4#banner
+write 0x7478742e cell1 5#.txt
+write 0 cell1 6#NUL
+write 0 cell1 7
+write 0 cell1 3#hack, root dir is always 0 on ramfs
+write 1 cell1 2#go_deeper
+write fsdpid cell1 1
+write 1 cell1 0
 jump loop always
 stage3:
 set stage 0
 jump loop always
 handlegotfile:
-read handl cell1 4
-jump handlegotfilefail equal handl -1
+read handle cell1 4
+jump handlegotfilefail equal handle -1
 set metastage 3
 set stage 3
 set indx 0
 write indx cell1 4
-write handl cell1 3
+write handle cell1 3
 write 2 cell1 2#readfile(banner.txt,0)
 write fsdpid cell1 1
 write 1 cell1 0
@@ -90,14 +184,18 @@ op add indx indx 1
 set stage 3
 set metastage 3
 write indx cell1 4
-write handl cell1 3
+write handle cell1 3
 write 2 cell1 2#readfile(banner.txt,indx)
 write fsdpid cell1 1
 write 1 cell1 0
 jump loop always
 handleinit:
-set metastage 2
 set stage 3
+jump handleinit_notisw equal fsisw 0
+set metastage 100
+jump handlecreatefile always
+handleinit_notisw:
+set metastage 2
 write 0x72656e6e6162 cell1 4#banner
 write 0x7478742e cell1 5#.txt
 write 0 cell1 6#NUL
@@ -107,6 +205,7 @@ write 1 cell1 2#go_deeper
 write fsdpid cell1 1
 write 1 cell1 0
 jump loop always
+
 handleanyc:
 set stage 3
 read resp cell1 4
