@@ -148,7 +148,7 @@ read typelen bank ind
 op mul termind block 64
 op add termind termind 64
 op and type typelen 0xff00000000
-op and len len 0xffffffff
+op and len typelen 0xffffffff
 jump dwait_reset_end_ret notEqual type 0x6600000000
 jump dwait_reset_end_ret lessThan name1 0
 jump dwait_reset_end_ret greaterThanEq name1 len
@@ -193,7 +193,7 @@ read typelen bank ind
 op mul termind block 64
 op add termind termind 64
 op and type typelen 0xff00000000
-op and len len 0xffffffff
+op and len typelen 0xffffffff
 jump dwait_reset_end_ret notEqual type 0x6600000000
 jump dwait_reset_end_ret lessThan name1 0
 jump dwait_reset_end_ret greaterThan name1 len
@@ -319,7 +319,7 @@ read typelen bank ind
 op mul termind block 64
 op add termind termind 64
 op and type typelen 0xff00000000
-op and len len 0xffffffff
+op and len typelen 0xffffffff
 jump dwait_reset_end_ret notEqual type 0x6400000000
 op add len len 1
 op or typelen type len
@@ -433,7 +433,7 @@ op add ind ind 1
 op mul termind block 64
 op add termind termind 64
 op and type typelen 0xff00000000
-op and len len 0xffffffff
+op and len typelen 0xffffffff
 jump dwait_reset_end_ret notEqual type 0x6400000000
 read par bank ind
 set i 0
@@ -484,7 +484,7 @@ op add ind ind 1
 op mul termind block 64
 op add termind termind 64
 op and type typelen 0xff00000000
-op and len len 0xffffffff
+op and len typelen 0xffffffff
 jump remove_object_delete_dir equal type 0x6400000000#if it is a directory we need to make sure that it's empty before continuing
 remove_file_loop:
 op idiv bank handle 512
@@ -522,7 +522,7 @@ op add ind ind 1
 op mul termind block 64
 op add termind termind 64
 op and type typelen 0xff00000000
-op and len len 0xffffffff
+op and len typelen 0xffffffff
 set shift 0
 read par bank ind
 set i 0
@@ -715,7 +715,7 @@ read typelen bank ind
 op mul termind block 64
 op add termind termind 64
 op and type typelen 0xff00000000
-op and len len 0xffffffff
+op and len typelen 0xffffffff
 jump dwait_reset_end_ret notEqual type 0x6400000000
 jump dwait_reset_end_ret lessThan name1 0
 jump dwait_reset_end_ret greaterThanEq name1 len
