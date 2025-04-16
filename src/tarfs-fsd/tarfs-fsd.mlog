@@ -1,9 +1,7 @@
-#processor1 is main lookup proc
-#processor2 is file content proc
-#processor3 is object next ptr proc
-set WARNING "TODO:do go_deeper/read/write/create/stat/remove_file/list_folder/control_object"
+#processor1 is fs string proc
 set COPYRIGHT "ukern-tarfs-fsd – a tar-fs driver program for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
 set SOURCELINK "https://github.com/BasedUser/mPC"
+set id 0
 loop:
 read c cell1 0
 jump ident equal c -1
@@ -14,7 +12,7 @@ jump error equal c -4
 jump code equal e 1
 jump loop always
 ident:
-write 0 cell1 1#NULNULNULNULNULNUL
+write id cell1 1#id
 write 0x667364 cell1 2#fsd
 write 0 cell1 3
 write 0 cell1 0

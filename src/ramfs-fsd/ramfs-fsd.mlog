@@ -6,6 +6,7 @@ set SOURCELINK "https://github.com/BasedUser/mPC"
 set fatbanks 1#512 blocks(512*1)
 set dbanks 64#512 blocks(8*64)
 set freeonboot 1#whether to make all fat entries free or not, turns the fs into tmpfs or an fs in nvram respectively
+set id 0
 loop:
 read c cell1 0
 jump ident equal c -1
@@ -16,7 +17,7 @@ jump error equal c -4
 jump code equal e 1
 jump loop always
 ident:
-write 0 cell1 1#NULNULNULNULNULNUL
+write id cell1 1#id
 write 0x667364 cell1 2#fsd
 write 0 cell1 3
 write 0 cell1 0
