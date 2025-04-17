@@ -5,7 +5,8 @@ set COPYRIGHT "ukern-ramfs-fsd – a ram-fs driver program for ukern\n© 2025 ca
 set SOURCELINK "https://github.com/BasedUser/mPC"
 set fatbanks 1#512 blocks(512*1)
 set dbanks 64#512 blocks(8*64)
-set freeonboot 1#whether to make all fat entries free or not, turns the fs into tmpfs or an fs in nvram respectively
+set alwaysfreeonboot 0
+
 set id 0
 loop:
 read c cell1 0
@@ -31,6 +32,10 @@ start:
 write 0 cell1 0
 set e 1
 set stage 0
+getlink bank 0
+read freeonboot bank 0#read first FAT entry to see if it is initialized at 0 or not
+op equal freeonboot freeonboot 0#it pointing to itself is not valid
+op or freeonboot freeonboot alwaysfreeonboot
 jump start_no_freeonboot equal freeonboot 0
 set i 0
 op mul termi fatbanks 512
@@ -764,7 +769,6 @@ jump dwait_reset_end_ret always
 list_dir_fail:
 set retval -1
 jump dwait_reset_end_ret always
-
 dwait_reset_end_ret:
 set stage 3
 write wpid cell1 1
@@ -791,6 +795,3 @@ error:
 write 0 cell1 0
 set stage 0
 jump loop always
-fail_counter:
-set retval -1
-jump dwait_reset_end_ret always
