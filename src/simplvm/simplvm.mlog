@@ -1,0 +1,240 @@
+#0-mov to from
+#1-ld to val
+#2-op type r1 r2
+#3-ldr isimm reg addr/regaddr
+#4-wrr imm1|imm2 val/immval immaddr/regaddr
+#5-cmp isimm val1 val2/imm2 
+#6-jmp to
+#7-jif to
+set COPYRIGHT "ukern-simplvm – a simple vm for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set SOURCELINK "https://github.com/BasedUser/mPC"
+set id 0
+loop:
+set ind 0
+read c cell1 0
+jump ident equal c -1
+jump start equal c -3
+jump stop equal c -2
+jump valid equal c -5
+jump error equal c -4
+jump code equal e 1
+jump loop always
+ident:
+write id cell1 1#NULNULNULNULNULNUL
+write 0x766d cell1 2#vm
+write 0 cell1 3
+write 0 cell1 0
+jump loop always
+stop:
+set gmesg 0
+write 0 cell1 0
+set e 0
+set stage -1
+jump loop always
+start:
+write 0 cell1 0
+set gmesg 1
+set e 1
+set stage 0
+jump loop always
+validnotgmesg:
+write 0 cell1 0
+jump loop always
+validresp:
+write 0 cell1 0
+set stage 0
+jump validrespkernver equal want 6
+jump validrespspawn equal want 4
+write -1 bank7 511
+set stage 0
+set gmesg 0
+jump loop always
+validrespkernver:
+read ver cell1 1
+write ver bank7 510
+write -1 bank7 511
+set stage 0
+set gmesg 0
+jump loop always
+validrespspawn:
+read pid cell1 1
+write pid bank7 510
+write -1 bank7 511
+set stage 0
+set gmesg 0
+jump loop always
+valid:
+jump validnotgmesg equal gmesg 0
+jump validresp equal gmesg 2
+write 0 cell1 0
+jump stagetwo notEqual stage 1
+read v cell1 1
+jump noipcmsg equal v -1
+set stage 2
+write 3 cell1 0
+jump loop always
+stagetwo:
+jump stage3 notEqual stage 2
+read isreal cell1 10#read verification value
+jump controlreq strictEqual isreal %7265616c
+write ind bank8 510
+read v cell1 1
+write v bank8 ind
+op add ind ind 1
+read v cell1 2
+write v bank8 ind
+op add ind ind 1
+read v cell1 3
+write v bank8 ind
+op add ind ind 1
+read v cell1 4
+write v bank8 ind
+op add ind ind 1
+read v cell1 5
+write v bank8 ind
+op add ind ind 1
+read v cell1 6
+write v bank8 ind
+op add ind ind 1
+read v cell1 7
+write v bank8 ind
+op add ind ind 1
+read v cell1 8
+write v bank8 ind
+op add ind ind 1
+read v cell1 9
+write v bank8 ind
+op add ind ind 1
+read v cell1 10
+write v bank8 ind
+op add ind ind 1
+op mod ind ind 510
+set stage 0
+jump loop always
+initarea:
+control enabled processor1 0
+write 0x4f4b cell1 2#OK
+write 1 cell1 0
+set stage 3
+jump loop always
+writedata:
+read addr cell1 5
+read val cell1 6
+op idiv hi addr 512
+op mod lo addr 512
+getlink bank hi
+write val bank lo
+write 0x4f4b cell1 2#OK
+write 1 cell1 0
+set stage 3
+jump loop always
+runapp:
+write 1 bank8 511
+wait 0.05
+control enabled processor1 1
+write 0x4f4b cell1 2#OK
+write 1 cell1 0
+set stage 3
+jump loop always
+haltapp:
+control enabled processor1 0
+write 1 bank8 511
+write 6 bank1 0
+write 0 bank1 1
+wait 0.05
+control enabled processor1 1
+write 0x4f4b cell1 2#OK
+write 1 cell1 0
+set stage 3
+jump loop always
+resptype:
+write 0x73766d cell1 2#svm
+write 1 cell1 0
+set stage 3
+jump loop always
+controlreq:
+read type cell1 4
+jump initarea equal type 0x49
+jump writedata equal type 0x57
+jump runapp equal type 0x52
+jump haltapp equal type 0x48
+jump resptype equal type 0x54 
+write 0xDEADBEEF cell1 2
+write 1 cell1 0
+set stage 3
+jump loop always
+stage3:
+set gmesg 0
+set stage 0
+jump loop always
+noipcmsg:
+write 0 cell1 63
+set stage 0
+jump loop always
+code:
+jump loop notEqual stage 0
+read msg cell1 63
+jump checkvm equal msg 0
+set gmesg 1
+write -1 cell1 1
+write 2 cell1 0
+set stage 1
+jump loop always
+checkvm:
+read want bank7 511
+jump loop lessThanEq want 0
+write 0 bank7 511
+set gmesg 2
+set stage 1
+jump sendipc equal want 1
+jump spawn equal want 4
+jump kill equal want 5
+jump kernver equal want 6
+write -3 bank7 511
+write 6 cell1 0
+jump loop always
+sendipc:
+read tid bank7 510
+read m1 bank7 509
+read m2 bank7 508
+read m3 bank7 507
+read m4 bank7 506
+read m5 bank7 505
+read m6 bank7 504
+read m7 bank7 503
+write tid cell1 1
+write m1 cell1 2
+write m2 cell1 3
+write m3 cell1 4
+write m4 cell1 5
+write m5 cell1 6
+write m6 cell1 7
+write m7 cell1 8
+write 1 cell1 0
+jump loop always
+spawn:
+read n1 bank7 510
+read n2 bank7 509
+write n1 cell1 1
+write n2 cell1 2
+write 4 cell1 0
+jump loop always
+kill:
+read pid bank7 510
+write pid cell1 1
+write 5 cell1 0
+jump loop always
+kernver:
+write 6 cell1 0
+jump loop always
+error:
+write 0 cell1 0
+jump reporterror equal gmesg 2
+set stage 0
+set gmesg 0
+jump loop always
+reporterror:
+write -2 bank7 511
+set stage 0
+set gmesg 0
+jump loop always

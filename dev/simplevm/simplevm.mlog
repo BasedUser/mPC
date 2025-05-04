@@ -1,0 +1,212 @@
+set COPYRIGHT "simplevm – a simple vm\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set SOURCELINK "https://github.com/BasedUser/mPC"
+#0-mov to from
+#1-ld to val
+#2-op type r1 r2
+#3-ldr isimm reg addr/regaddr
+#4-wrr imm1|imm2 val/immval immaddr/regaddr
+#5-cmp isimm val1 val2/imm2 
+#6-jmp to
+#7-jif to
+set pc 0
+set flg 0
+set wdrs @second
+execute:
+op sub tmp @second wdrs
+jump no_interrupt lessThan tmp 0.05
+read wda bank8 511#CHANGEME:only supports 8 banks
+jump no_interrupt equal wda 0
+set wdrs @second
+op sub pc wda 1
+no_interrupt:
+op add callback @counter 1
+jump read_pc always
+op add @counter @counter out
+jump mov always
+jump ld always
+jump op always
+jump ldr always
+jump wrr always
+jump cmp always
+jump jmp always
+jump jif always
+mov:
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+set to out
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+read tmp cell1 out
+write tmp cell1 to
+jump normal_advance always
+ld:
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+set to out
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+write out cell1 to
+jump normal_advance always
+op:
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+op and imm out 1
+op shr op out 1
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+set reg out
+read regval cell1 reg
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+jump imm equal imm 1
+read val cell1 out
+jump readed always
+imm:
+set val out
+readed:
+op mul off op 2
+op add @counter @counter off
+op add out regval val
+jump toset always
+op sub out regval val
+jump toset always
+op div out regval val
+jump toset always
+op mul out regval val
+jump toset always
+op idiv out regval val
+jump toset always
+op mod out regval val
+jump toset always
+op pow out regval val
+jump toset always
+op xor out regval val
+jump toset always
+op and out regval val
+jump toset always
+op or out regval val
+jump toset always
+toset:
+write out cell1 reg
+jump normal_advance always
+ldr:
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+set imm out
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+set var out
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+jump readram_imm equal imm 1
+read pos cell1 out
+jump got_read_addr always
+readram_imm:
+set pos out
+got_read_addr:
+op idiv hi pos 512
+op mod li pos 512
+getlink bnk hi
+read out bnk li
+write out cell1 var
+jump normal_advance always
+wrr:
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+op shr imm1 out 1
+op and imm2 out 1
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+jump writeram_imm1 equal imm1 1
+read val cell1 out
+jump writeram_imm1end always
+writeram_imm1:
+set val out
+writeram_imm1end:
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+jump writeram_imm2 equal imm2 1
+read pos cell1 out
+jump got_write_addr always
+writeram_imm2:
+set pos out
+got_write_addr:
+op idiv hi pos 512
+op mod li pos 512
+getlink bnk hi
+write val bnk li
+jump normal_advance always
+cmp:
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+op and imm out 1
+op shr op out 1
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+read val1 cell1 out
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+jump compare_imm equal imm 1
+read val2 cell1 out
+jump compare_ready always
+compare_imm:
+set val2 out
+compare_ready:
+op mul off op 2
+#op lessThanEq result a b
+#op greaterThanEq result a b
+#op notEqual result a b
+
+op add @counter @counter off
+op equal flg val1 val2
+jump normal_advance always
+op lessThan flg val1 val2
+jump normal_advance always
+op greaterThan flg val1 val2
+jump normal_advance always
+op lessThanEq flg val1 val2
+jump normal_advance always
+op greaterThanEq flg val1 val2
+jump normal_advance always
+op notEqual flg val1 val2
+jump normal_advance always
+jmp:
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+set pc out
+jump execute always
+jif:
+op add pc pc 1
+op add callback @counter 1
+jump read_pc always
+jump normal_advance equal flg 0
+set pc out
+jump execute always
+normal_advance:
+op add pc pc 1
+jump execute always
+end
+read_pc:
+op mod pc pc 4096#CHANGEME:only supports 8 banks
+op idiv hi pc 512
+op mod li pc 512
+getlink bnk hi
+read out bnk li
+set @counter callback
