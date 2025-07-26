@@ -25,6 +25,7 @@ write 0 cell1 0
 read pid cell1 1
 op add timeout @second 4
 set e 1
+set timeoutdone 1
 set n1 0
 set n2 0
 set n3 0
