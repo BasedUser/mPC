@@ -15,7 +15,7 @@
 #-5 as command is response
 set COPYRIGHT "ukern – simple microkernel\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
 set SOURCELINK "https://github.com/BasedUser/mPC"
-set ver 1
+set ver 2
 set kmemlinks 8
 set kmemcapacity 64
 set procc 4
