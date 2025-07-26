@@ -184,7 +184,7 @@ op shl tmp tmp 8
 op or tmp tmp tmpv
 op add ci ci 1
 op add ind ind 1
-jump go_deeper_get_n1 lessThan ci 6
+jump list_dir_get_n1 lessThan ci 6
 write tmp cell1 3
 set tmp 0
 set ci 0
@@ -195,7 +195,7 @@ op shl tmp tmp 8
 op or tmp tmp tmpv
 op add ci ci 1
 op add ind ind 1
-jump go_deeper_get_n2 lessThan ci 6
+jump list_dir_get_n2 lessThan ci 6
 write tmp cell1 4
 set tmp 0
 set ci 0
@@ -206,7 +206,7 @@ op shl tmp tmp 8
 op or tmp tmp tmpv
 op add ci ci 1
 op add ind ind 1
-jump go_deeper_get_n3 lessThan ci 6
+jump list_dir_get_n3 lessThan ci 6
 write tmp cell1 5
 read ptr metad ind#after the 18 chars of name we get the file ptr
 op sub ptr ptr 0x5000
