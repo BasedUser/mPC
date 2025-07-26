@@ -138,8 +138,10 @@ read v cell1 0
 jump waitforshutdownnotifsucc notEqual v -5
 write pid cell1 1#the final actual kill
 write 5 cell1 0
-set stage 3
-jump loop always
+waitfordeath:
+read tmpv cell1 0
+jump waitfordeath greaterThanEq tmpv 0
+jump stop always
 stage3:
 set stage 0
 jump loop always

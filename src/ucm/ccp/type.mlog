@@ -25,7 +25,7 @@ write 0 cell1 0
 read pid cell1 1
 op add timeout @second 4
 set e 1
-set timeoutdone 1
+set timeoutdone 0
 set n1 0
 set n2 0
 set n3 0
@@ -178,9 +178,10 @@ read v cell1 0
 jump waitforshutdownnotifsucc notEqual v -5
 write pid cell1 1#the final actual kill
 write 5 cell1 0
-set stage 3
-set e 0
-jump loop always
+waitfordeath:
+read tmpv cell1 0
+jump waitfordeath greaterThanEq tmpv 0
+jump stop always
 nomoreipc:
 set stage 0
 write 0 cell1 63
