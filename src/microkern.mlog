@@ -435,12 +435,12 @@ jump kmemwrite always
 op add index index 1
 set val cpid
 write cpid app 1
-write cpid sprocapp 1
 op add km_callback @counter 1
 jump kmemwrite always
 op add cpid cpid 1
 op add sprocapp sprocslot kmemlinks
 getlink sprocapp sprocapp
+write val sprocapp 1
 write -3 sprocapp 0
 write -5 app 0
 set @counter callback
