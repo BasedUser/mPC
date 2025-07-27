@@ -125,7 +125,7 @@ op add sentindex sentindex 6
 set packedargs 0
 waitforaccumedargssent:
 read tmpval cell1 0
-jump waitforaccumedargssent equal tmpval -5
+jump waitforaccumedargssent notEqual tmpval -5
 notenoughargsaccumed:
 op add bufptr bufptr 1
 jump accumingargs lessThan bufptr maxptr
