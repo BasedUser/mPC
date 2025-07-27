@@ -23,9 +23,7 @@ jump loop always
 start:
 write 0 cell1 0
 read pid cell1 1
-op add timeout @second 10
 set e 1
-set timeoutdone 0
 set n1 0
 set n2 0
 set n3 0
@@ -133,7 +131,9 @@ op sub ushift ushift 8
 op shr umask umask 8
 jump handlegetargsend_loop notEqual umask 0
 handlegetargshaveall_zerolen:
-set stage 0
+set stage 2
+set metastage 6
+write 6 cell1 0
 jump loop always
 handlegetfile:
 set metastage 2
@@ -190,12 +190,6 @@ code:
 jump loop notEqual stage 0
 read ipcin cell1 63
 jump handleipcin notEqual ipcin 0
-jump timeoutnotexpr equal timeoutdone 1
-jump timeoutnotexpr greaterThan timeout @second
-set metastage 6
-set stage 2
-write 6 cell1 0
-set timeoutdone 1
 timeoutnotexpr:
 jump loop always
 handleipcin:
