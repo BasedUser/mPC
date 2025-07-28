@@ -190,7 +190,6 @@ code:
 jump loop notEqual stage 0
 read ipcin cell1 63
 jump handleipcin notEqual ipcin 0
-timeoutnotexpr:
 jump loop always
 handleipcin:
 write -1 cell1 1

@@ -207,10 +207,15 @@ handletermdhandlecmd:
 #DIR <filespec>
 #ERA <filespec>
 #REN <new> = <old>
+#ok so fsd doesn't have a rename syscall but i can conjure something up by copying everything
 #SAVE <pages> <file> unimpl!
 #TYPE <filename>
 #USER <area> unimpl!
 #<drive-letter>: to change to that drive(unimpl!)
+#ED <filename>?????(creates file if it doesn't exist)
+#ok i would need to think up of something
+#uhhh
+
 #ok so drive letter is going to be fun
 #ok so ccp could spawn all those drives
 #or maybe the fs wrapper?
@@ -229,7 +234,7 @@ handletermdhandlecmd:
 #you can include trailing junk data that will be ignored to store some data in the binary
 #please expect messages from the ccp with your args after you spawn
 #TODO:DO STUFF
-set check "3DIR|3ERA|3REN|4TYPE|"
+set check "4DIR |4DIR\n|4ERA |4ERA\n|4REN |4REN\n|5TYPE |5TYPE\n|3ED |3ED\n|"
 set cmdc 4
 set cmdi 0
 set i 0
@@ -242,11 +247,15 @@ set cpi 0
 handletermdhandlecmdinloop:
 read val1 bank1 cpi
 read val2 check i
-op and val1 val1 0x5f
-op equal eq val1 val2
+op lessThanEq tmp1 val1 0x7a
+op greaterThanEq tmp2 val1 0x61
+op and tmp1 tmp1 tmp2
+op mul tmp1 tmp1 0x20
+op xor tmp1 tmp1 0x7f
+op and val1 val1 tmp1
 op add cpi cpi 1
 op add i i 1
-jump handletermdhandlecmdskiploop equal eq 0
+jump handletermdhandlecmdskiploop notEqual val1 val2
 jump handletermdhandlecmdinloop lessThan i len
 #found command
 jump handletermdfoundvalidcmd always
@@ -276,13 +285,31 @@ set applo 0x0
 set apphi 0x444952
 jump handletermdfoundvalidcmdgotname always
 set applo 0x0
+set apphi 0x444952
+jump handletermdfoundvalidcmdgotname always
+set applo 0x0
+set apphi 0x455241
+jump handletermdfoundvalidcmdgotname always
+set applo 0x0
 set apphi 0x455241
 jump handletermdfoundvalidcmdgotname always
 set applo 0x0
 set apphi 0x52454e
 jump handletermdfoundvalidcmdgotname always
 set applo 0x0
+set apphi 0x52454e
+jump handletermdfoundvalidcmdgotname always
+set applo 0x0
 set apphi 0x54595045
+jump handletermdfoundvalidcmdgotname always
+set applo 0x0
+set apphi 0x54595045
+jump handletermdfoundvalidcmdgotname always
+set applo 0x0
+set apphi 0x4544
+jump handletermdfoundvalidcmdgotname always
+set applo 0x0
+set apphi 0x4544
 jump handletermdfoundvalidcmdgotname always
 handletermdfoundvalidcmdgotname:
 set metastage 101
