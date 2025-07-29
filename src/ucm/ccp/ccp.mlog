@@ -265,17 +265,15 @@ op greaterThanEq tmp2 val1 0x41
 op and tmp1 tmp1 tmp2
 jump notDriveLetterChange equal tmp1 0
 op sub disk val1 0x41
-set stage 3
+set stage 2
 set metastage 200
-write 0x0a cell1 2#send newline
-write 2 cell1 1
-write 1 cell1 0
+write 6 cell1 0
 set bufptr 0#clean up
 write bufptr bank1 511
 jump loop always
 notDriveLetterChange:
-set check "4DIR |4DIR\n|4ERA |4ERA\n|4CPY |4CPY\n|5TYPE |5TYPE\n|3ED |3ED\n|"
-set cmdc 10
+set check "4DIR |4DIR\n|4ERA |4ERA\n|4CPY |4CPY\n|5TYPE |5TYPE\n|3ED |3ED\n|4REN |4REN\n"
+set cmdc 12
 set cmdi 0
 set i 0
 sensor checklen check @size
@@ -308,13 +306,11 @@ handletermdskipskiploop:
 op add i i 1
 op add cmdi cmdi 1
 jump handletermdhandlecmdoutloop lessThan cmdi cmdc
-#this is an external cmd now
-set stage 3
+#external cmds are not impled
+set stage 2
 set metastage 200
-write 0x0a cell1 2#send newline
-write 2 cell1 1
-write 1 cell1 0
-set bufptr 0#clean up because external cmds are not real yet
+write 6 cell1 0
+set bufptr 0#clean up
 write bufptr bank1 511
 jump loop always
 handletermdfoundvalidcmd:
@@ -350,6 +346,12 @@ set apphi 0x4544
 jump handletermdfoundvalidcmdgotname always
 set applo 0x0
 set apphi 0x4544
+jump handletermdfoundvalidcmdgotname always
+set applo 0x0
+set apphi 0x52454e
+jump handletermdfoundvalidcmdgotname always
+set applo 0x0
+set apphi 0x52454e
 jump handletermdfoundvalidcmdgotname always
 handletermdfoundvalidcmdgotname:
 set metastage 101

@@ -1,0 +1,293 @@
+set COPYRIGHT "ukern-ucm-ccp-ren – a renaming program for ccp ukern-ucm\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+set SOURCELINK "https://github.com/BasedUser/mPC"
+loop:
+set fsdpid 4
+read c cell1 0
+jump ident equal c -1
+jump stop equal c -2
+jump start equal c -3
+jump valid equal c -5
+jump error equal c -4
+jump code equal e 1
+jump loop always
+ident:
+write 0 cell1 1
+write 0x52454e cell1 2#REN
+write 0 cell1 3
+write 0 cell1 0
+jump loop always
+stop:
+write 0 cell1 0
+set e 0
+jump loop always
+start:
+write 0 cell1 0
+read pid cell1 1
+set e 1
+set n1 0
+set n2 0
+set n3 0
+set foundequals 0
+set sn1 0
+set sn2 0
+set sn3 0
+set cindex 0
+set c1fsdpid -1
+set c2fsdpid -1
+set stage 0
+set metastage 1
+jump loop always
+valid:
+write 0 cell1 0
+jump stage2 greaterThanEq stage 2
+read v cell1 1
+jump nomoreipc equal v -1
+set stage 2
+write 3 cell1 0
+jump loop always
+stage2:
+jump stage3 greaterThanEq stage 3
+jump handlegetargs equal metastage 1
+jump handlegotfile1 equal metastage 2
+jump handlegotfilechar equal metastage 3
+jump handlefilewritten equal metastage 4
+jump handleshutdown equal metastage 5
+jump handlegetfile1 equal metastage 6
+jump handlegotfile2 equal metastage 100
+jump handlecreatefile2 equal metastage 101
+jump handlegetfile2 equal metastage 102
+set stage -1
+jump loop always
+stage3:
+set stage 0
+jump loop always
+handlegotfile1:
+read shandle cell1 4
+jump handlegotfilefail equal shandle -1
+set metastage 100
+set stage 3
+write n1 cell1 4
+write n2 cell1 5
+write n3 cell1 6
+write 0 cell1 7
+write 0 cell1 3#hack, root dir is always 0 on ramfs
+write 1 cell1 2#go_deeper
+write c2fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlegotfilefail:
+set metastage 5
+set stage 2
+write 6 cell1 0
+jump loop always
+handlegotfile2:
+read handle cell1 4
+jump handlegotfile2fail equal handle -1
+set metastage 3
+set stage 3
+set indx 0
+write indx cell1 4
+write shandle cell1 3
+write 2 cell1 2#readfile(target,indx)
+write c1fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlegotfile2fail:
+set metastage 101
+set stage 2
+write 6 cell1 0
+jump loop always
+handlecreatefile2:
+set metastage 102
+set stage 3
+write n1 cell1 4
+write n2 cell1 5
+write n3 cell1 6
+write 0x66 cell1 7#filey type
+write 0 cell1 3#hack, root dir is always 0 on ramfs
+write 4 cell1 2#create_object
+write c2fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlegetfile2:
+set metastage 100
+set stage 3
+write n1 cell1 4
+write n2 cell1 5
+write n3 cell1 6
+write 0 cell1 7
+write 0 cell1 3#hack, root dir is always 0 on ramfs
+write 1 cell1 2#go_deeper
+write c2fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlegotfilechar:
+read byte cell1 4
+jump handlegotfilecharbreak equal byte -1
+set stage 3
+set metastage 4
+write indx cell1 4
+write byte cell1 5
+write 0 cell1 6
+write 0 cell1 7
+write handle cell1 3
+write 3 cell1 2
+write c2fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlegotfilecharbreak:
+set stage 3
+set metastage 5
+write sn1 cell1 4
+write sn2 cell1 5
+write sn3 cell1 6
+write 0 cell1 7
+write 0 cell1 3#hack, root dir is always 0 on ramfs
+write 5 cell1 2#remove_object
+write c1fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlefilewritten:
+op add indx indx 1
+set stage 3
+set metastage 3
+write indx cell1 4
+write shandle cell1 3
+write 2 cell1 2#readfile(target,indx)
+write cfsdpid cell1 1
+write 1 cell1 0
+jump loop always
+handlegetargs:
+read maindata cell1 4
+op shr counth maindata 48
+jump handlegetargshaveall lessThan counth 6#6 is the usual packed amount
+#process current arg block here
+set umask 0xff0000000000
+set ushift 40
+handlegetargs_loop:
+op and char maindata umask
+op shr char char ushift
+op add callback @counter 3#the various conditions are exclusive
+jump nameend_handle equal char 0x3d
+jump diskletterhandle equal char 0x3a
+jump parseargchar always
+op add cindex cindex 1
+op sub ushift ushift 8
+op shr umask umask 8
+jump handlegetargs_loop notEqual umask 0
+set stage 0
+jump loop always
+handlegetargshaveall:
+#finish processing the last arg block if it's not 0 length
+jump handlegetargshaveall_zerolen equal counth 0
+#ok so what now
+#i guess this?
+op mul ushift counth 8
+op sub ushift ushift 16
+op shl umask 0xff ushift
+handlegetargsend_loop:
+op and char maindata umask
+op shr char char ushift
+op add callback @counter 3#the various conditions are exclusive
+jump nameend_handle equal char 0x3d
+jump diskletterhandle equal char 0x3a
+jump parseargchar always
+op add cindex cindex 1
+op sub ushift ushift 8
+op shr umask umask 8
+jump handlegetargsend_loop notEqual umask 0
+handlegetargshaveall_zerolen:
+read disk cell1 6
+op add cfsdpid fsdpid disk
+jump c1fsdpidvalid notEqual c1fsdpid -1
+set c1fsdpid cfsdpid
+c1fsdpidvalid:
+jump c2fsdpidvalid notEqual c2fsdpid -1
+set c2fsdpid cfsdpid
+c2fsdpidvalid:
+set stage 2
+set metastage 6
+write 6 cell1 0
+jump loop always
+handlegetfile1:
+set metastage 2
+set stage 3
+write sn1 cell1 4
+write sn2 cell1 5
+write sn3 cell1 6
+write 0 cell1 7
+write 0 cell1 3#hack, root dir is always 0 on ramfs
+write 1 cell1 2#go_deeper
+write c1fsdpid cell1 1
+write 1 cell1 0
+jump loop always
+diskletterhandle:
+set cindex -1#so that the increment increments it to 0
+op and disk n1 0xff
+op sub disk disk 0x41
+op add c2fsdpid fsdpid disk
+set n1 0
+set @counter callback
+nameend_handle:
+set c1fsdpid c2fsdpid
+set c2fsdpid -1
+set sn1 n1
+set sn2 n2
+set sn3 n3
+set n1 0
+set n2 0
+set n3 0
+set cindex -1#so that the increment increments it to 0
+set @counter callback
+parseargchar:
+jump parseargchar_ret equal char 0x0a#newlines NOT welcome
+jump parseargchar_ret equal char 0x00#NULs NOT welcome
+jump parseargchar_notn1 greaterThanEq cindex 6
+op mul shift cindex 8
+op shl char char shift
+op or n1 n1 char
+jump parseargchar_ret always
+parseargchar_notn1:
+jump parseargchar_notn2 greaterThanEq cindex 12
+op mul shift cindex 8
+op sub shift shift 48
+op shl char char shift
+op or n2 n2 char
+jump parseargchar_ret always
+parseargchar_notn2:
+jump parseargchar_ret greaterThanEq cindex 18
+op mul shift cindex 8
+op sub shift shift 96
+op shl char char shift
+op or n3 n3 char
+parseargchar_ret:
+set @counter callback
+handleshutdown:
+write 1 cell1 1#hello ccp, i am the dead
+write 1 cell1 0
+waitforshutdownnotifsucc:
+read v cell1 0
+jump waitforshutdownnotifsucc notEqual v -5
+write pid cell1 1#the final actual kill
+write 5 cell1 0
+waitfordeath:
+read tmpv cell1 0
+jump waitfordeath greaterThanEq tmpv 0
+jump stop always
+nomoreipc:
+set stage 0
+write 0 cell1 63
+jump loop always
+code:
+jump loop notEqual stage 0
+read ipcin cell1 63
+jump handleipcin notEqual ipcin 0
+jump loop always
+handleipcin:
+write -1 cell1 1
+write 2 cell1 0
+set stage 1
+jump loop always
+error:
+write 0 cell1 0
+jump loop always
