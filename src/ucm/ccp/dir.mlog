@@ -58,6 +58,8 @@ set stage 0
 jump loop always
 handlegetargshaveall:
 #finish processing the last arg block if it's not 0 length
+read disk cell1 6
+op add cfsdpid fsdpid disk
 set metastage 2
 set stage 2
 write 6 cell1 0
@@ -66,7 +68,7 @@ handlelistdir:
 write dirindex cell1 4
 write 0 cell1 3#root dir
 write 6 cell1 2#list_dir
-write fsdpid cell1 1
+write cfsdpid cell1 1
 write 1 cell1 0
 set stage 3
 set metastage 3

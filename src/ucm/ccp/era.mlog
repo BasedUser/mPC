@@ -93,6 +93,8 @@ op sub ushift ushift 8
 op shr umask umask 8
 jump handlegetargsend_loop notEqual umask 0
 handlegetargshaveall_zerolen:
+read disk cell1 6
+op add cfsdpid fsdpid disk
 set stage 2
 set metastage 6
 write 6 cell1 0
@@ -106,7 +108,7 @@ write n3 cell1 6
 write 0 cell1 7
 write 0 cell1 3#hack, root dir is always 0 on ramfs
 write 5 cell1 2#remove_object
-write fsdpid cell1 1
+write cfsdpid cell1 1
 write 1 cell1 0
 jump loop always
 parseargchar:

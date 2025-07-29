@@ -99,6 +99,7 @@ jump findfirstspace lessThan bufptr maxptr
 #MAKE SURE WE SEND A DUMMY REQUEST
 write 0 cell1 2
 write 0 cell1 3
+write disk cell1 4
 write spawnedpid cell1 1
 write 1 cell1 0
 set metastage 100#just wait for the termination of the task
@@ -119,6 +120,7 @@ op or packedargs packedargs batchaccumed
 set batchaccumed 0
 write packedargs cell1 2
 write sentindex cell1 3
+write disk cell1 4
 write spawnedpid cell1 1
 write 1 cell1 0
 op add sentindex sentindex 6
@@ -135,12 +137,26 @@ op shl batchaccumed batchaccumed 48
 op or packedargs packedargs batchaccumed
 write packedargs cell1 2
 write sentindex cell1 3
+write disk cell1 4
 write spawnedpid cell1 1
 write 1 cell1 0
 set metastage 100#just wait for the termination of the task
 set stage 3
 jump loop always
-handleinit:
+handleinit:#ok so the idea is i spawn as many fsds as i can
+#and when i can't i stop
+set fsdid 1#since fsd id 0 was spawned by init and is the boot drive
+spawnfsds:
+write 0x667364 cell1 2
+write fsdid cell1 1
+write 4 cell1 0
+op add fsdid fsdid
+spawnfsdswaitsucc:
+read tmpval cell1 0
+jump spawnedfsds equal tmpval -4
+jump spawnfsdswaitsucc notEqual tmpval -5
+jump spawnfsds always 
+spawnedfsds:
 set stage 2
 set metastage 200
 write 6 cell1 0
@@ -211,8 +227,15 @@ handletermdhandlecmd:
 #SAVE <pages> <file> unimpl!
 #TYPE <filename>
 #USER <area> unimpl!
-#<drive-letter>: to change to that drive(unimpl!)
+#<drive-letter>: to change to that drive
+#so i could use m3 to denote the fsd pid that the command should use
+#but i would still need to somehow have a logical system
+#ok so first fsd is pid 4 then pid 5
+#oh wait yeah
+#i don't need super complex handling since if i spawn the fsds before any command they will be in sequence
+#done i guess, time to test
 #ED <filename>?????(creates file if it doesn't exist)
+#unimpl
 #ok i would need to think up of something
 #uhhh
 
@@ -234,8 +257,25 @@ handletermdhandlecmd:
 #you can include trailing junk data that will be ignored to store some data in the binary
 #please expect messages from the ccp with your args after you spawn
 #TODO:DO STUFF
-set check "4DIR |4DIR\n|4ERA |4ERA\n|4REN |4REN\n|5TYPE |5TYPE\n|3ED |3ED\n|"
-set cmdc 4
+read val1 bank1 1
+jump notDriveLetterChange notEqual val1 0x3a
+read val1 bank1 0
+op lessThanEq tmp1 val1 0x5a
+op greaterThanEq tmp2 val1 0x41
+op and tmp1 tmp1 tmp2
+jump notDriveLetterChange equal tmp1 0
+op sub disk val1 0x41
+set stage 3
+set metastage 200
+write 0x0a cell1 2#send newline
+write 2 cell1 1
+write 1 cell1 0
+set bufptr 0#clean up
+write bufptr bank1 511
+jump loop always
+notDriveLetterChange:
+set check "4DIR |4DIR\n|4ERA |4ERA\n|4CPY |4CPY\n|5TYPE |5TYPE\n|3ED |3ED\n|"
+set cmdc 10
 set cmdi 0
 set i 0
 sensor checklen check @size
@@ -294,10 +334,10 @@ set applo 0x0
 set apphi 0x455241
 jump handletermdfoundvalidcmdgotname always
 set applo 0x0
-set apphi 0x52454e
+set apphi 0x435059
 jump handletermdfoundvalidcmdgotname always
 set applo 0x0
-set apphi 0x52454e
+set apphi 0x435059
 jump handletermdfoundvalidcmdgotname always
 set applo 0x0
 set apphi 0x54595045
