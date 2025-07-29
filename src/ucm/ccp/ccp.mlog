@@ -150,7 +150,7 @@ spawnfsds:
 write 0x667364 cell1 2
 write fsdid cell1 1
 write 4 cell1 0
-op add fsdid fsdid
+op add fsdid fsdid 1
 spawnfsdswaitsucc:
 read tmpval cell1 0
 jump spawnedfsds equal tmpval -4
