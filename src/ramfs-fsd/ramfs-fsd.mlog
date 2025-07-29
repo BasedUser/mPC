@@ -755,16 +755,18 @@ op mod block handle 8
 getlink bank bank
 op mul ind block 64
 op add ind ind tind
-read retval bank ind
+read n1 bank ind
+write n1 cell1 3
 op add ind ind 1
 read n2 bank ind
 op add ind ind 1
 read n3 bank ind
 op add ind ind 1
 read ptr bank ind
-write n2 cell1 3
-write n3 cell1 4
-write ptr cell1 5
+write n2 cell1 4
+write n3 cell1 5
+write ptr cell1 6
+set retval 0
 jump dwait_reset_end_ret always
 list_dir_fail:
 set retval -1
