@@ -1,9 +1,9 @@
 #0-mov to from
 #1-ld to val
-#2-op type r1 r2
+#2-op op,isimm r1 r2
 #3-ldr isimm reg addr/regaddr
 #4-wrr imm1|imm2 val/immval immaddr/regaddr
-#5-cmp isimm val1 val2/imm2 
+#5-cmp op,isimm val1 val2/imm2 
 #6-jmp to
 #7-jif to
 set COPYRIGHT "ukern-simplvm – a simple vm for ukern\n© 2025 camelStyleUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
