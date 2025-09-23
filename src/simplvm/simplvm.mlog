@@ -129,8 +129,7 @@ write 1 cell1 0
 set stage 3
 jump loop always
 runapp:
-write 1 bank8 511
-wait 0.05
+write 0 processor1 "@counter"
 control enabled processor1 1
 write 0x4f4b cell1 2#OK
 write 1 cell1 0
@@ -138,10 +137,9 @@ set stage 3
 jump loop always
 haltapp:
 control enabled processor1 0
-write 1 bank8 511
 write 6 bank1 0
 write 0 bank1 1
-wait 0.05
+write 0 processor1 "@counter"
 control enabled processor1 1
 write 0x4f4b cell1 2#OK
 write 1 cell1 0

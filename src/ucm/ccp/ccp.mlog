@@ -2,6 +2,7 @@ set COPYRIGHT "ukern-ucm-ccp – a CCP for ukern UCM\n© 2025 camelStyleUser. Re
 set SOURCELINK "https://github.com/BasedUser/mPC"
 loop:
 set fsdpid 4
+set vmid 0
 read c cell1 0
 jump ident equal c -1
 jump stop equal c -2
@@ -21,6 +22,8 @@ write 0 cell1 0
 set e 0
 jump loop always
 start:
+set vmpid -1
+set funflag 0
 set disk 0
 write 0 cell1 0
 set e 1
@@ -48,6 +51,12 @@ jump handlewaitfortaskend equal metastage 100
 jump exeloadergetfile equal metastage 101
 jump exeloaderreadfile equal metastage 102
 jump exeloaderwritevm equal metastage 103
+jump exeloadersuccspawn equal metastage 104
+jump exeloadertestervmtype equal metastage 105
+jump exeloaderstartvm equal metastage 106
+jump exeloaderstartedvm equal metastage 107
+jump exeloaderhaltvm equal metastage 108
+jump exeloaderwritestartbyte equal metastage 109
 jump promptdiskchar1 equal metastage 200
 jump promptdiskchar2 equal metastage 201
 jump promptprepareanyc equal metastage 202
@@ -76,11 +85,283 @@ write 0 cell1 2
 write 3 cell1 1
 write 1 cell1 0
 jump loop always
-exeloadergetfile:#TODO:
-
+exeloaderwritestartbyte:
+set batchaccumed 0
+set stage 3
+jump exeloaderwritestartbyte_end_mstage equal exepos vmlbyte
+set metastage 102
+jump exeloaderwritestartbyte_corr_mstage always
+exeloaderwritestartbyte_end_mstage:
+set metastage 106
+exeloaderwritestartbyte_corr_mstage:
+write %7265616c cell1 8#this is a command to the vm controller,not an ipc to the vm
+write 0x57 cell1 2#Write data
+write vmptr cell1 3
+op add vmptr vmptr 1
+op and sign packedargs 0x80000000
+jump exeloaderwritestartbyte_notneg equal sign 0
+op and packedargs packedargs 0x7fffffff
+op xor packedargs packedargs 0x7fffffff
+op add packedargs packedargs 1
+op sub packedargs 0 packedargs
+exeloaderwritestartbyte_notneg:
+write packedargs cell1 4
+set packedargs 0
+write vmpid cell1 1
+write 1 cell1 0
+jump loop always
+exeloadergetfile:#TODO:parse name
+set funflag 0
+set bufptr 0
+set packedargs 0
+set batchaccumed 0
+set cn 0
+set n1 0
+set n2 0
+set n3 0
+exeloadergetfile_packname:
+read val bank1 bufptr
+op add bufptr bufptr 1
+jump exeloadergetfile_packedname equal val 0x20
+jump exeloadergetfile_packedname equal val 0x0a
+op mul tmppacker batchaccumed 8
+op shl tmppacker val tmppacker
+op or packedargs packedargs tmppacker
+op add batchaccumed batchaccumed 1
+jump exeloadergetfile_packedname equal batchaccumed 6
+jump exeloadergetfile_packname always
+exeloadergetfile_packedname:
+op mul off cn 2
+op add @counter @counter off
+set n1 packedargs
+jump exeloadergetfile_namepacker_compl always
+set n2 packedargs
+jump exeloadergetfile_namepacker_compl always
+set n3 packedargs
+jump exeloadergetfile_namepacker_compl always
+exeloadergetfile_namepacker_compl:
+set packedargs 0
+op add cn cn 1
+jump exeloadergetfile_compl_packing equal cn 3
+jump exeloadergetfile_compl_packing notEqual batchaccumed 6
+set batchaccumed 0
+jump exeloadergetfile_packname always
+exeloadergetfile_compl_packing:
+set packedargs 0
+set batchaccumed 0
+set vmptr 0
+set fileptr 0
+set metastage 102
+set stage 3
+set isnt 0
+write n1 cell1 4
+write n2 cell1 5
+write n3 cell1 6
+write 0 cell1 7
+write 0 cell1 3#hack, root dir is always 0 on ramfs
+write 1 cell1 2#go_deeper
+op add cfsdpid fsdpid disk
+write cfsdpid cell1 1
+write 1 cell1 0
+jump loop always
 exeloaderreadfile:#TODO:
+set funflag 0
+jump exeloaderreadfile_skiphandleget notEqual fileptr 0
+read handle cell1 4
+jump exeloaderwritevm_fail equal handle -1
+exeloaderreadfile_skiphandleget:
+write fileptr cell1 4
+op add fileptr fileptr 1
+write handle cell1 3
+write 2 cell1 2
+write cfsdpid cell1 1
+write 1 cell1 0
+set metastage 103
+set stage 3
+jump loop always
 exeloaderwritevm:#TODO:
-
+set funflag 0
+read val cell1 4
+jump exeloaderwritevm_fail equal val -1
+jump exeloaderwritevm_nottypedeterm notEqual fileptr 1
+op equal isnt val 0x4e#N
+jump exeloaderwritevm_cont equal val 0x4e
+jump exeloaderwritevm_cont equal val 0x56
+jump exeloaderwritevm_fail always
+exeloaderwritevm_nottypedeterm:
+jump exeloaderwritevm_nottypecheck notEqual fileptr 2
+set packedargs 0
+op mul targchar isnt 7
+op add targchar targchar 0x4d#pick either M or T depending on isnt
+jump exeloaderwritevm_fail notEqual val targchar
+jump exeloaderwritevm_cont always
+exeloaderwritevm_nottypecheck:
+op mul checkeroff isnt 12
+op sub checkeroff fileptr checkeroff
+op sub checkeroff checkeroff 3
+jump exeloaderwritevm_getntname lessThan checkeroff 0
+jump exeloaderwritevm_getlen lessThan checkeroff 4
+jump exeloaderwritevm_gettype equal checkeroff 4
+op sub exepos checkeroff 5
+jump exeloaderwritevm_getvminstr lessThan exepos vmblen
+exeloaderwritevm_cont:
+set metastage 102
+set stage 2
+write 6 cell1 0
+jump loop always
+exeloaderwritevm_gettype:
+jump exeloaderwritevm_fail greaterThanEq val 0x01
+op mul off val 2
+op add @counter @counter off
+set expvmtype 0x73766d
+jump exeloaderwritevm_gotvmtype always
+exeloaderwritevm_gotvmtype:
+set batchaccumed 0
+write %7265616c cell1 8#this is a command to the vm controller,not an ipc to the vm
+write 0x54 cell1 2#Type of vm
+write vmpid cell1 1
+write 1 cell1 0
+set stage 3
+set metastage 105
+jump loop always
+exeloaderwritevm_getvminstr:
+op mul tmppacker batchaccumed 7
+op add batchaccumed batchaccumed 1
+op and isnotend val 0x80
+op and val val 0x7f
+op shl tmppacker val tmppacker
+op or packedargs packedargs tmppacker
+jump exeloaderwritevm_initarea equal exepos 0
+jump exeloaderwritevm_gotvminstr equal isnotend 0
+set stage 2
+set metastage 102
+write 6 cell1 0
+jump loop always
+exeloaderwritevm_initarea:
+set stage 3
+jump exeloaderwritevm_initarea_isend equal isnotend 0
+set metastage 102
+jump exeloaderwritevm_initarea_mstage_corr always
+exeloaderwritevm_initarea_isend:
+set metastage 109
+exeloaderwritevm_initarea_mstage_corr:
+write %7265616c cell1 8#this is a command to the vm controller,not an ipc to the vm
+write 0x49 cell1 2#Initialize area
+write vmpid cell1 1
+write 1 cell1 0
+jump loop always
+exeloaderwritevm_gotvminstr:
+set batchaccumed 0
+set stage 3
+jump exeloader_gotvminstr_end_mstage equal exepos vmlbyte
+set metastage 102
+jump exeloader_gotvminstr_corr_mstage always
+exeloader_gotvminstr_end_mstage:
+set metastage 106
+exeloader_gotvminstr_corr_mstage:
+write %7265616c cell1 8#this is a command to the vm controller,not an ipc to the vm
+write 0x57 cell1 2#Write data
+write vmptr cell1 3
+op add vmptr vmptr 1
+op and sign packedargs 0x80000000
+jump exeloaderwritevm_gotvminstr_notneg equal sign 0
+op and packedargs packedargs 0x7fffffff
+op xor packedargs packedargs 0x7fffffff
+op add packedargs packedargs 1
+op sub packedargs 0 packedargs
+exeloaderwritevm_gotvminstr_notneg:
+write packedargs cell1 4
+set packedargs 0
+write vmpid cell1 1
+write 1 cell1 0
+jump loop always
+exeloaderwritevm_fail:
+set stage 2
+set metastage 200
+write 6 cell1 0
+jump loop always
+exeloaderwritevm_getlen:
+op mul tmppacker checkeroff 8
+op shl tmppacker val tmppacker
+op or packedargs packedargs tmppacker
+jump exeloaderwritevm_gotlen equal checkeroff 3
+set stage 2
+set metastage 102
+write 6 cell1 0
+jump loop always
+exeloaderwritevm_gotlen:
+set vmblen packedargs
+op sub vmlbyte vmblen 1
+set packedargs 0
+set stage 2
+set metastage 102
+write 6 cell1 0
+jump loop always
+exeloaderwritevm_getntname:
+op shr packedargs packedargs 8
+op shl tmppacker val 48
+op or packedargs packedargs tmppacker
+op add batchaccumed batchaccumed 1
+jump exeloaderwritevm_setntn1 equal batchaccumed 6
+jump exeloaderwritevm_setntn2 equal batchaccumed 12
+set stage 2
+set metastage 102
+write 6 cell1 0
+jump loop always
+exeloaderwritevm_setntn1:
+set n1 packedargs
+set packedargs 0
+set stage 2
+set metastage 102
+write 6 cell1 0
+jump loop always
+exeloaderwritevm_setntn2:
+set n2 packedargs
+set packedargs 0
+set funflag 1#failure shouldn't fully reset us, and instead we just fetch the next char as usual
+set stage 2
+set metastage 104
+write n2 cell1 2
+write n1 cell1 1
+write 4 cell1 0
+jump loop always
+exeloadersuccspawn:
+read spawnedpid cell1 1
+set stage 4
+set isspawnedvm 0
+set metastage 200
+write 6 cell1 0
+jump loop always
+exeloadertestervmtype:
+read realvmtype cell1 4
+jump exeloaderwritevm_fail notEqual realvmtype expvmtype
+set stage 2
+set metastage 102
+write 6 cell1 0
+jump loop always
+exeloaderstartvm:
+set stage 3
+set metastage 107
+write %7265616c cell1 8#this is a command to the vm controller,not an ipc to the vm
+write 0x52 cell1 2#Run vm
+write vmpid cell1 1
+write 1 cell1 0
+jump loop always
+exeloaderhaltvm:
+set stage 3
+set metastage 200
+write %7265616c cell1 8#this is a command to the vm controller,not an ipc to the vm
+write 0x48 cell1 2#Halt vm
+write vmpid cell1 1
+write 1 cell1 0
+jump loop always
+exeloaderstartedvm:
+set stage 4
+set metastage 200
+set spawnedpid vmpid
+set isspawnedvm 1
+write 6 cell1 0
+jump loop always
 stage3:
 jump stage4 greaterThanEq stage 4
 set stage 0
@@ -99,6 +380,10 @@ jump findfirstspace lessThan bufptr maxptr
 #MAKE SURE WE SEND A DUMMY REQUEST
 write 0 cell1 2
 write 0 cell1 3
+write 0 cell1 5
+write 0 cell1 6
+write 0 cell1 7
+write 0 cell1 8
 write disk cell1 4
 write spawnedpid cell1 1
 write 1 cell1 0
@@ -121,6 +406,10 @@ set batchaccumed 0
 write packedargs cell1 2
 write sentindex cell1 3
 write disk cell1 4
+write 0 cell1 5
+write 0 cell1 6
+write 0 cell1 7
+write 0 cell1 8
 write spawnedpid cell1 1
 write 1 cell1 0
 op add sentindex sentindex 6
@@ -138,9 +427,19 @@ op or packedargs packedargs batchaccumed
 write packedargs cell1 2
 write sentindex cell1 3
 write disk cell1 4
+write 0 cell1 5
+write 0 cell1 6
+write 0 cell1 7
+write 0 cell1 8
 write spawnedpid cell1 1
 write 1 cell1 0
+jump sentargs_vmkill equal isspawnedvm 1
 set metastage 100#just wait for the termination of the task
+jump sentargs_mstage_stable always
+sentargs_vmkill:
+set isspawnedvm 0
+set metastage 108
+sentargs_mstage_stable:
 set stage 3
 jump loop always
 handleinit:#ok so the idea is i spawn as many fsds as i can
@@ -157,6 +456,15 @@ jump spawnedfsds equal tmpval -4
 jump spawnfsdswaitsucc notEqual tmpval -5
 jump spawnfsds always 
 spawnedfsds:
+write vmid cell1 1
+write 0x766d cell1 2
+write 4 cell1 0
+spawnvmwaitsucc:
+read tmpval cell1 0
+jump spawnedvm equal tmpval -4
+jump spawnvmwaitsucc notEqual tmpval -5
+read vmpid cell1 1
+spawnedvm:
 set stage 2
 set metastage 200
 write 6 cell1 0
@@ -252,8 +560,19 @@ handletermdhandlecmd:
 #native still has a vm just in case
 #native exes must at least include a vm stub that writes a message like "executing <program> using vm is not supported!\n" and send a task end packet to the ccp!!!!!!!!
 #12 bytes with process id if NT
-#32-bit little-endian how many instructions
-#32-bit little-endian integers to store into vm(yes, ints)
+#32-bit little-endian how many bytes for instructions are used
+#1-byte vm type
+#0x00 -svm(simplvm)
+#encoded ints to store into vm
+#int encoding is
+#x[y:z] is get bits y through z(zero-based inclusive) of x
+#{bitarray/bit,bitarray/bit} merge bits/bitarrays(first goes to most significant bit places)
+#<0x80 db {0,instr[0:6]}
+#<0x4000 db {1,instr[0:6]},{0,instr[7:13]}
+#<0x200000 db {1,instr[0:6]},{1,instr[7:13]},{0,instr[14:20]}
+#<0x10000000 db {1,instr[0:6]},{1,instr[7:13]},{1,instr[14:20]},{0,instr[21:27]}
+#<0x100000000 db {1,instr[0:6]},{1,instr[7:13]},{1,instr[14:20]},{1,instr[21:27]},{0000,instr[28:31]}
+#do not attempt to encode higher ints
 #you can include trailing junk data that will be ignored to store some data in the binary
 #please expect messages from the ccp with your args after you spawn
 #TODO:DO STUFF
@@ -294,7 +613,7 @@ op and val1 val1 tmp1
 op add cpi cpi 1
 op add i i 1
 jump handletermdhandlecmdskiploop notEqual val1 val2
-jump handletermdhandlecmdinloop lessThan i len
+jump handletermdhandlecmdinloop lessThan cpi len
 #found command
 jump handletermdfoundvalidcmd always
 handletermdhandlecmdskiploop:
@@ -308,7 +627,7 @@ op add cmdi cmdi 1
 jump handletermdhandlecmdoutloop lessThan cmdi cmdc
 #external cmds are not impled
 set stage 2
-set metastage 200
+set metastage 101
 write 6 cell1 0
 set bufptr 0#clean up
 write bufptr bank1 511
@@ -354,7 +673,7 @@ set applo 0x0
 set apphi 0x52454e
 jump handletermdfoundvalidcmdgotname always
 handletermdfoundvalidcmdgotname:
-set metastage 101
+set metastage 100
 set stage 4
 write applo cell1 1
 write apphi cell1 2
@@ -363,6 +682,7 @@ waitforbuiltinappspawned:
 read tmpval cell1 0
 jump waitforbuiltinappspawned greaterThanEq tmpval 0
 read spawnedpid cell1 1
+set isspawnedvm 0
 #set bufptr 0#clean up
 #write bufptr bank1 511
 jump loop always
@@ -386,5 +706,12 @@ write 2 cell1 0
 set stage 1
 jump loop always
 error:
+jump error_funflag equal funflag 1
 write 0 cell1 0
+jump loop always
+error_funflag:
+set funflag 0
+set stage 3
+set metastage 102
+write 6 cell1 0
 jump loop always
