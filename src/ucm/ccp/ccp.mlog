@@ -112,6 +112,7 @@ write 1 cell1 0
 jump loop always
 exeloadergetfile:#TODO:parse name
 set funflag 0
+set maxptr bufptr
 set bufptr 0
 set packedargs 0
 set batchaccumed 0
@@ -147,6 +148,8 @@ jump exeloadergetfile_compl_packing notEqual batchaccumed 6
 set batchaccumed 0
 jump exeloadergetfile_packname always
 exeloadergetfile_compl_packing:
+set bufptr maxptr
+set maxptr 0
 set packedargs 0
 set batchaccumed 0
 set vmptr 0
@@ -629,8 +632,8 @@ jump handletermdhandlecmdoutloop lessThan cmdi cmdc
 set stage 2
 set metastage 101
 write 6 cell1 0
-set bufptr 0#clean up
-write bufptr bank1 511
+#set bufptr 0#clean up
+#write bufptr bank1 511
 jump loop always
 handletermdfoundvalidcmd:
 #cmdi is the cmd i

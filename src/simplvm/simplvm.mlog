@@ -10,7 +10,7 @@ set COPYRIGHT "ukern-simplvm – a simple vm for ukern\n© 2025 camelStyleUser. 
 set SOURCELINK "https://github.com/BasedUser/mPC"
 set id 0
 loop:
-set ind 0
+
 read c cell1 0
 jump ident equal c -1
 jump start equal c -3
@@ -32,6 +32,7 @@ set e 0
 set stage -1
 jump loop always
 start:
+set ind 0
 write 0 cell1 0
 set gmesg 1
 set e 1
