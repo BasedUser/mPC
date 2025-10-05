@@ -55,7 +55,10 @@ mov 4,1
 opind IDIV,4,5
 opimm MOD,4,256
 wrrindind 4,8
+cmpi EQ,4,0
+jif skipadd
 opimm ADD,8,1
+skipadd:
 opimm IDIV,5,256
 opimm SUB,2,1
 cmpi GE,2,0
