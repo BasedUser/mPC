@@ -1,0 +1,950 @@
+# documentation: would need sfmlog for an actual symbol map. too bad!
+boot:
+	read @counter ROMPROC IP
+	set COPYRIGHT "rVM - mlog self-virtualization execution unit\n© 2025 BasedUser. Released under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html).\nThis program is provided without any warranty."
+	set SOURCELINK "https://github.com/BasedUser/mPC"
+	jump boot always 0 0
+deref_equals:
+	read IP INCRPROC IP
+	read ptr_ptr ROMPROC IP
+	read ptr ROMPROC ptr_ptr
+	read val ROMPROC ptr
+	write val ROMPROC ptr_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+deref_equals_bin:
+	read IP INCRPROC IP
+	read tgt_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read src_ptr ROMPROC IP
+	read ptr ROMPROC src_ptr
+	read val ROMPROC ptr
+	write val ROMPROC tgt_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+jump_always:
+	read IP INCRPROC IP
+	read where ROMPROC IP
+do_jump:
+	set IP where
+	read @counter ROMPROC IP
+jump_equal:
+	read IP INCRPROC IP
+	read where ROMPROC IP
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	op equal tmp a b
+	jump do_jump strictEqual tmp 1
+	read @counter ROMPROC IP
+jump_notEqual:
+	read IP INCRPROC IP
+	read where ROMPROC IP
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	op notEqual tmp a b
+	jump do_jump strictEqual tmp 1
+	read @counter ROMPROC IP
+jump_lessThan:
+	read IP INCRPROC IP
+	read where ROMPROC IP
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	op lessThan tmp a b
+	jump do_jump strictEqual tmp 1
+	read @counter ROMPROC IP
+jump_lessThanEq:
+	read IP INCRPROC IP
+	read where ROMPROC IP
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	op lessThanEq tmp a b
+	jump do_jump strictEqual tmp 1
+	read @counter ROMPROC IP
+jump_greaterThan:
+	read IP INCRPROC IP
+	read where ROMPROC IP
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	op greaterThan tmp a b
+	jump do_jump strictEqual tmp 1
+	read @counter ROMPROC IP
+jump_greaterThanEq:
+	read IP INCRPROC IP
+	read where ROMPROC IP
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	op greaterThanEq tmp a b
+	jump do_jump strictEqual tmp 1
+	read @counter ROMPROC IP
+jump_strictEqual:
+	read IP INCRPROC IP
+	read where ROMPROC IP
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	op strictEqual tmp a b
+	jump do_jump strictEqual tmp 1
+	read @counter ROMPROC IP
+read:
+	read IP INCRPROC IP
+	read data_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read src_ptr ROMPROC IP
+	read src ROMPROC src_ptr
+	read IP INCRPROC IP
+	read index_ptr ROMPROC IP
+	read index ROMPROC index_ptr
+	read data src index
+	write data ROMPROC data_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+write:
+	read IP INCRPROC IP
+	read payload_ptr ROMPROC IP
+	read payload ROMPROC payload_ptr
+	read IP INCRPROC IP
+	read dst_ptr ROMPROC IP
+	read dst ROMPROC dst_ptr
+	read IP INCRPROC IP
+	read index_ptr ROMPROC IP
+	read index ROMPROC index_ptr
+	write payload dst index
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_clear:
+	read IP INCRPROC IP
+	read r_ptr ROMPROC IP
+	read r ROMPROC r_ptr
+	read IP INCRPROC IP
+	read g_ptr ROMPROC IP
+	read g ROMPROC g_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	draw clear r g b
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_color:
+	read IP INCRPROC IP
+	read r_ptr ROMPROC IP
+	read r ROMPROC r_ptr
+	read IP INCRPROC IP
+	read g_ptr ROMPROC IP
+	read g ROMPROC g_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	draw color r g b a
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_col:
+	read IP INCRPROC IP
+	read packedcolor_ptr ROMPROC IP
+	read packedcolor ROMPROC packedcolor_ptr
+	draw col packedcolor
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_col_imm:
+	read IP INCRPROC IP
+	read packedcolor_imm ROMPROC IP
+	draw col imm packedcolor_imm
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_stroke:
+	read IP INCRPROC IP
+	read strokewidth_ptr ROMPROC IP
+	read strokewidth ROMPROC strokewidth_ptr
+	draw stroke strokewidth
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_line:
+	read IP INCRPROC IP
+	read x1_ptr ROMPROC IP
+	read x1 ROMPROC x1_ptr
+	read IP INCRPROC IP
+	read y1_ptr ROMPROC IP
+	read y1 ROMPROC y1_ptr
+	read IP INCRPROC IP
+	read x2_ptr ROMPROC IP
+	read x2 ROMPROC x2_ptr
+	read IP INCRPROC IP
+	read y2_ptr ROMPROC IP
+	read y2 ROMPROC y2_ptr
+	draw line x1 y1 x2 y2
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_rect:
+	read IP INCRPROC IP
+	read x_bl_ptr ROMPROC IP
+	read x_bl ROMPROC x_bl_ptr
+	read IP INCRPROC IP
+	read y_bl_ptr ROMPROC IP
+	read y_bl ROMPROC y_bl_ptr
+	read IP INCRPROC IP
+	read w_ptr ROMPROC IP
+	read w ROMPROC w_ptr
+	read IP INCRPROC IP
+	read h_ptr ROMPROC IP
+	read h ROMPROC h_ptr
+	draw rect x_bl y_bl w h
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_lineRect:
+	read IP INCRPROC IP
+	read x_bl_ptr ROMPROC IP
+	read x_bl ROMPROC x_bl_ptr
+	read IP INCRPROC IP
+	read y_bl_ptr ROMPROC IP
+	read y_bl ROMPROC y_bl_ptr
+	read IP INCRPROC IP
+	read w_ptr ROMPROC IP
+	read w ROMPROC w_ptr
+	read IP INCRPROC IP
+	read h_ptr ROMPROC IP
+	read h ROMPROC h_ptr
+	draw lineRect x_bl y_bl w h
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_poly:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	read IP INCRPROC IP
+	read sides_ptr ROMPROC IP
+	read sides ROMPROC sides_ptr
+	read IP INCRPROC IP
+	read radius_ptr ROMPROC IP
+	read radius ROMPROC radius_ptr
+	read IP INCRPROC IP
+	read rotation_ptr ROMPROC IP
+	read rotation ROMPROC rotation_ptr
+	draw poly x y sides radius rotation
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_linePoly:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	read IP INCRPROC IP
+	read sides_ptr ROMPROC IP
+	read sides ROMPROC sides_ptr
+	read IP INCRPROC IP
+	read radius_ptr ROMPROC IP
+	read radius ROMPROC radius_ptr
+	read IP INCRPROC IP
+	read rotation_ptr ROMPROC IP
+	read rotation ROMPROC rotation_ptr
+	draw linePoly x y sides radius rotation
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_triangle:
+	read IP INCRPROC IP
+	read x1_ptr ROMPROC IP
+	read x1 ROMPROC x1_ptr
+	read IP INCRPROC IP
+	read y1_ptr ROMPROC IP
+	read y1 ROMPROC y1_ptr
+	read IP INCRPROC IP
+	read x2_ptr ROMPROC IP
+	read x2 ROMPROC x2_ptr
+	read IP INCRPROC IP
+	read y2_ptr ROMPROC IP
+	read y2 ROMPROC y2_ptr
+	read IP INCRPROC IP
+	read x3_ptr ROMPROC IP
+	read x3 ROMPROC x3_ptr
+	read IP INCRPROC IP
+	read y3_ptr ROMPROC IP
+	read y3 ROMPROC y3_ptr
+	draw triangle x1 y1 x2 y2 x3 y3
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_image:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	read IP INCRPROC IP
+	read imageobj_ptr ROMPROC IP
+	read imageobj ROMPROC imageobj_ptr
+	read IP INCRPROC IP
+	read size_ptr ROMPROC IP
+	read size ROMPROC size_ptr
+	read IP INCRPROC IP
+	read rotation_ptr ROMPROC IP
+	read rotation ROMPROC rotation_ptr
+	draw image x y imageobj size rotation
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_print_bottomLeft:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	draw print x y bottomLeft
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_print_topLeft:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	draw print x y topLeft
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_print_bottomRight:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	draw print x y bottomRight
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_print_topRight:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	draw print x y topRight
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_translate:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	draw translate x y
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_scale:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	draw scale x y
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_rotate:
+	read IP INCRPROC IP
+	read degrees_ptr ROMPROC IP
+	read degrees ROMPROC degrees_ptr
+	draw rotate 0 0 degrees
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+draw_reset:
+	draw reset
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+print:
+	read IP INCRPROC IP
+	read obj_ptr ROMPROC IP
+	read obj ROMPROC obj_ptr
+	print obj
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+printchar:
+	read IP INCRPROC IP
+	read char_ptr ROMPROC IP
+	read char ROMPROC char_ptr
+	printchar char
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+format:
+	read IP INCRPROC IP
+	read obj_ptr ROMPROC IP
+	read obj ROMPROC obj_ptr
+	format obj
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+drawflush:
+	read IP INCRPROC IP
+	read tgt ROMPROC IP
+	read tgt ROMPROC tgt_ptr
+	drawflush tgt
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+drawflush_imm:
+	read IP INCRPROC IP
+	read tgt ROMPROC IP
+	drawflush tgt
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+printflush:
+	read IP INCRPROC IP
+	read tgt_ptr ROMPROC IP
+	read tgt ROMPROC tgt_ptr
+	printflush tgt
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+printflush_imm:
+	read IP INCRPROC IP
+	read tgt ROMPROC IP
+	printflush tgt
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+getlink:
+	read IP INCRPROC IP
+	read building_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read linknum_ptr ROMPROC IP
+	read linknum ROMPROC linknum_ptr
+	getlink building linknum
+	write building ROMPROC building_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+control_enabled:
+	read IP INCRPROC IP
+	read building_ptr ROMPROC IP
+	read building ROMPROC building_ptr
+	read IP INCRPROC IP
+	read enable_ptr ROMPROC IP
+	read enable ROMPROC enable_ptr
+	control enabled building enable
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+control_shoot:
+	read IP INCRPROC IP
+	read building_ptr ROMPROC IP
+	read building ROMPROC building_ptr
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	read IP INCRPROC IP
+	read shoot_ptr ROMPROC IP
+	read shoot ROMPROC shoot_ptr
+	control shoot building x y shoot
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+control_shootp:
+	read IP INCRPROC IP
+	read building_ptr ROMPROC IP
+	read building ROMPROC building_ptr
+	read IP INCRPROC IP
+	read target_ptr ROMPROC IP
+	read target ROMPROC target_ptr
+	control shootp building target
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+control_config:
+	read IP INCRPROC IP
+	read building_ptr ROMPROC IP
+	read building ROMPROC building_ptr
+	read IP INCRPROC IP
+	read obj_ptr ROMPROC IP
+	read obj ROMPROC obj_ptr
+	control config building obj
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+control_color:
+	read IP INCRPROC IP
+	read building_ptr ROMPROC IP
+	read building ROMPROC building_ptr
+	read IP INCRPROC IP
+	read clr_ptr ROMPROC IP
+	read clr ROMPROC clr_ptr
+	control color building clr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+radar_enemy:
+	read IP INCRPROC IP
+	read src_ptr ROMPROC IP
+	read src ROMPROC src_ptr
+	read IP INCRPROC IP
+	read closest ROMPROC IP
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	radar enemy any any src closest result
+	write result ROMPROC result_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+radar_ally:
+	read IP INCRPROC IP
+	read src_ptr ROMPROC IP
+	read src ROMPROC src_ptr
+	read IP INCRPROC IP
+	read closest ROMPROC IP
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	radar ally any any src closest result
+	write result ROMPROC result_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+sensor:
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read obj_ptr ROMPROC IP
+	read obj ROMPROC obj_ptr
+	read IP INCRPROC IP
+	read prop_ptr ROMPROC IP
+	read prop ROMPROC prop_ptr
+	sensor result obj prop
+	write result ROMPROC result_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+set_var_imm:
+	read IP INCRPROC IP
+	read var_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read imm ROMPROC IP
+	write imm ROMPROC var_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+set_var_mem:
+	read IP INCRPROC IP
+	read var_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read mem_ptr ROMPROC IP
+	read mem ROMPROC mem_ptr
+	write mem ROMPROC var_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+wait:
+	read IP INCRPROC IP
+	read duration_ptr ROMPROC IP
+	read duration ROMPROC duration_ptr
+	wait duration
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+ubind:
+	read IP INCRPROC IP
+	read what_ptr ROMPROC IP
+	read what ROMPROC what_ptr
+	ubind what
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+ubind_imm:
+	read IP INCRPROC IP
+	read what_imm ROMPROC IP
+	ubind imm what_imm
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+ucontrol_move:
+	read IP INCRPROC IP
+	read x_ptr ROMPROC IP
+	read x ROMPROC x_ptr
+	read IP INCRPROC IP
+	read y_ptr ROMPROC IP
+	read y ROMPROC y_ptr
+	ucontrol move x y
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+ucontrol_flag:
+	read IP INCRPROC IP
+	read flag_ptr ROMPROC IP
+	read flag ROMPROC flag_ptr
+	ucontrol flag flag
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+ucontrol_build:
+	read IP INCRPROC IP
+	read x ROMPROC IP
+	read IP INCRPROC IP
+	read y ROMPROC IP
+	read IP INCRPROC IP
+	read block ROMPROC IP
+	read IP INCRPROC IP
+	read rot ROMPROC IP
+	read IP INCRPROC IP
+	read config ROMPROC IP
+	ucontrol build x y block rot config
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+ucontrol_getBlock:
+	read IP INCRPROC IP
+	read x ROMPROC IP
+	read IP INCRPROC IP
+	read y ROMPROC IP
+	read IP INCRPROC IP
+	read outtype_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read outbuilding_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read outfloor_ptr ROMPROC IP
+	ucontrol getBlock x y outtype outbuilding outfloor
+	write outtype ROMPROC outtype_ptr
+	write outbuilding ROMPROC outbuilding_ptr
+	write outfloor ROMPROC outfloor_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+lookup_block:
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read id ROMPROC IP
+	lookup block result id
+	write result ROMPROC result_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+lookup_unit:
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read id ROMPROC IP
+	lookup unit result id
+	write result ROMPROC result_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+lookup_item:
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read id ROMPROC IP
+	lookup item result id
+	write result ROMPROC result_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+lookup_liquid:
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read id ROMPROC IP
+	lookup liquid result id
+	write result ROMPROC result_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+lookup_team:
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read id ROMPROC IP
+	lookup team result id
+	write result ROMPROC result_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+packcolor:
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read r_ptr ROMPROC IP
+	read r ROMPROC r_ptr
+	read IP INCRPROC IP
+	read g_ptr ROMPROC IP
+	read g ROMPROC g_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	packcolor result r g b a
+	write result ROMPROC result_ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+set_A_imm:
+	read IP INCRPROC IP
+	read A ROMPROC IP
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+set_A_ptr:
+	read IP INCRPROC IP
+	read ptr ROMPROC IP
+	read A ROMPROC ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+set_B_imm:
+	read IP INCRPROC IP
+	read B ROMPROC IP
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+set_B_ptr:
+	read IP INCRPROC IP
+	read ptr ROMPROC IP
+	read B ROMPROC ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+set_X_imm:
+	read IP INCRPROC IP
+	read X ROMPROC IP
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+set_X_ptr:
+	read IP INCRPROC IP
+	read ptr ROMPROC IP
+	read X ROMPROC ptr
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+write_A_idx:
+	read IP INCRPROC IP
+	read idx_ptr ROMPROC IP
+	read idx ROMPROC idx_ptr
+	write A ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+write_B_idx:
+	read IP INCRPROC IP
+	read idx_ptr ROMPROC IP
+	read idx ROMPROC idx_ptr
+	write B ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+write_X_idx:
+	read IP INCRPROC IP
+	read idx_ptr ROMPROC IP
+	read idx ROMPROC idx_ptr
+	write X ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+read_A_idx:
+	read IP INCRPROC IP
+	read idx_ptr ROMPROC IP
+	read idx ROMPROC idx_ptr
+	read A ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+read_B_idx:
+	read IP INCRPROC IP
+	read idx_ptr ROMPROC IP
+	read idx ROMPROC idx_ptr
+	read B ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+read_X_idx:
+	read IP INCRPROC IP
+	read idx_ptr ROMPROC IP
+	read idx ROMPROC idx_ptr
+	read X ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+write_A_idx_imm:
+	read IP INCRPROC IP
+	read idx ROMPROC IP
+	write A ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+write_B_idx_imm:
+	read IP INCRPROC IP
+	read idx ROMPROC IP
+	write B ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+write_X_idx_imm:
+	read IP INCRPROC IP
+	read idx ROMPROC IP
+	write X ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+read_A_idx_imm:
+	read IP INCRPROC IP
+	read idx ROMPROC IP
+	read A ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+read_B_idx_imm:
+	read IP INCRPROC IP
+	read idx ROMPROC IP
+	read B ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+read_X_idx_imm:
+	read IP INCRPROC IP
+	read idx ROMPROC IP
+	read X ROMPROC idx
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+stop_instr:
+	stop
+	read IP INCRPROC IP # yes this is technically needed to maintain mlog parity
+	read @counter ROMPROC IP
+end:
+	set IP "v0000"
+	read @counter ROMPROC IP
+bop:
+	read IP INCRPROC IP
+	read kind ROMPROC IP
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	read IP INCRPROC IP
+	read b_ptr ROMPROC IP
+	read b ROMPROC b_ptr
+	read IP INCRPROC IP
+	op mul offset kind 2
+	op add @counter @counter offset
+	op add result a b
+	jump op_done always 0 0
+	op sub result a b
+	jump op_done always 0 0
+	op mul result a b
+	jump op_done always 0 0
+	op div result a b
+	jump op_done always 0 0
+	op idiv result a b
+	jump op_done always 0 0
+	op mod result a b
+	jump op_done always 0 0
+	op pow result a b
+	jump op_done always 0 0
+	op equal result a b
+	jump op_done always 0 0
+	op notEqual result a b
+	jump op_done always 0 0
+	op land result a b
+	jump op_done always 0 0
+	op lessThan result a b
+	jump op_done always 0 0
+	op lessThanEq result a b
+	jump op_done always 0 0
+	op greaterThan result a b
+	jump op_done always 0 0
+	op greaterThanEq result a b
+	jump op_done always 0 0
+	op strictEqual result a b
+	jump op_done always 0 0
+	op shl result a b
+	jump op_done always 0 0
+	op shr result a b
+	jump op_done always 0 0
+	op or result a b
+	jump op_done always 0 0
+	op and result a b
+	jump op_done always 0 0
+	op xor result a b
+	jump op_done always 0 0
+	op max result a b
+	jump op_done always 0 0
+	op min result a b
+	jump op_done always 0 0
+	op angle result a b
+	jump op_done always 0 0
+	op angleDiff result a b
+	jump op_done always 0 0
+	op len result a b
+	jump op_done always 0 0
+	op noise result a b
+	jump op_done always 0 0
+op_done:
+	write result ROMPROC result_ptr
+	read @counter ROMPROC IP
+uop:
+	read IP INCRPROC IP
+	read kind ROMPROC IP
+	read IP INCRPROC IP
+	read result_ptr ROMPROC IP
+	read IP INCRPROC IP
+	read a_ptr ROMPROC IP
+	read a ROMPROC a_ptr
+	read IP INCRPROC IP
+	op add @counter @counter kind
+	op not result a
+	jump op_done always 0 0
+	op abs result a
+	jump op_done always 0 0
+	op log result a
+	jump op_done always 0 0
+	op log10 result a
+	jump op_done always 0 0
+	op floor result a
+	jump op_done always 0 0
+	op ceil result a
+	jump op_done always 0 0
+	op sqrt result a
+	jump op_done always 0 0
+	op rand result a
+	jump op_done always 0 0
+	op sin result a
+	jump op_done always 0 0
+	op cos result a
+	jump op_done always 0 0
+	op tan result a
+	jump op_done always 0 0
+	op asin result a
+	jump op_done always 0 0
+	op acos result a
+	jump op_done always 0 0
+	op atan result a
+	jump op_done always 0 0
+op_add_A_A_B:
+	op add A A B
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+op_add_X_A_B:
+	op add X A B
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+op_sub_A_A_B:
+	op sub A A B
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+op_sub_X_A_B:
+	op sub X A B
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+op_mul_A_A_B:
+	op mul A A B
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+op_mul_X_A_B:
+	op mul X A B
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+op_div_A_A_B:
+	op div A A B
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
+op_div_X_A_B:
+	op div X A B
+	read IP INCRPROC IP
+	read @counter ROMPROC IP
