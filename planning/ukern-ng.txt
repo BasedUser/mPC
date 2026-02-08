@@ -1,0 +1,74 @@
+Proposal for ukern-ng
+Copyright(C) 2026 6f6626
+License: https://creativecommons.org/licenses/by-sa/4.0/legalcode.txt
+Current version: 1.0
+Terminology:
+uRAM - user RAM
+uRMS - user separated readable - modifiable RAM storage
+kRAM - kernel ram procs
+kTAB - kernel table procs
+uTAB - user table procs
+Security Model:
+templates are fully trusted(so unless they're highly trusted singletons they shouldn't have any links)
+`ucontrol getblock` is NOT defended against(so no processor should contain it to prevent any possibility of it being used)
+apps can opt in to be defended against accidental or intentional corruption
+(say, having separate either per-template or per-instance uTABs)
+instance memory interactions are heavily guarded
+Abstract:
+The ukern-ng kernel is designed to provide fast uRAMs
+(point-to-point between processes) for inter-process communication.
+The ukern-ng kernel will also provide a simple protocol for sending
+a message without setting up a uRAM for low-bandwidth high-latency
+communication.
+Proposed Areas:
+build area - area for new processors, uRAM or otherwise
+template area - area for templates
+kernel data area - area for kernel RAM procs
+Specs:
+non-FIFO messages will be 4 slots
+Proposed ABI:
+required data defs in template:
+_NAME is equal to the native app name(lowercase ascii)
+_KABIVER="ukern-ng <major, currently 1>"
+_KABIMINOR=<minor, currently 0>
+_CBUILD=bit 0 is whether uRAM is used, bit 1 is whether uRMS is used
+bit 2 is whether this template requires separated instance-shared uTAB,
+bit 3 is whether every instance requires own uTAB
+_ISSINGLETON=0 if not a singleton(will be built in the build area to work), else 1
+app to kernel:
+_CMD=<command to execute>
+_TARG=<target for commands that require it>
+_WM1=<1st slot of msg>
+_WM2=<2nd slot of msg>
+_WM3=<3rd slot of msg>
+_WM4=<4th slot of msg>
+_AD0=<first auth word>
+_AD1=<second auth word>
+_AD2=<third auth word>
+_AD3=<fourth auth word>
+_AD4=<fifth auth word>
+auth words store some data that apps can use to prove their access to a certain resource
+kernel to app:
+_SNDR=<sender pid>
+_STATUS=<status>
+_RM1=<1st slot of recvd msg>
+_RM2=<2nd slot of recvd msg>
+_RM3=<3rd slot of recvd msg>
+_RM4=<4th slot of recvd msg>
+_RMS=<is message special FIFO establish or not>
+_PMSG=<are there pending messages>
+commands:
+name notation: human name / apiName(args): returns
+1 - kernel ver / kVer(): _STATUS=str
+returns string of form "ukern-ng <major>.<minor>.<patch>" in _STATUS
+2 - incoming ipc message count / kIpcMsgCount(): _STATUS=num
+returns count of incoming ipc messages(including special fifo establish messages)
+3 - kGetMsg(): _STATUS="ok" if any messages present, also sets _RM1,_RM2,_RM3,_RM4,_RMS, else if no ipc msgs _STATUS="none", also removes the message
+4 - kSendMsg(_TARG,_WM1,_WM2,_WM3,_WM4): _STATUS="ok" if it is possible to send the message
+5 - kSpawn(_TARG): _STATUS="ok" if the target was successfully spawned, else "none"
+6 - kKill(_TARG): _STATUS="ok" if the killing of the target process is authorized, else "none"
+7 - kBeginFifoEstablish(_TARG,_WM1,_WM2,_WM3,_WM4): _STATUS="ok" if it is possible to send the message, else "none"
+8 - kRespondFifoEstablish(_TARG,_WM1,_WM2,_WM3,_WM4): _STATUS="ok" if it is possible to respond, else "none"
+9 - kCreateRAM(_WM1=<how many processors>)
+
+Further suggestions welcome
