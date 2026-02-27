@@ -545,8 +545,8 @@ handletermdhandlecmd:
 #oh wait yeah
 #i don't need super complex handling since if i spawn the fsds before any command they will be in sequence
 #done i guess, time to test
-#ED <filename>?????(creates file if it doesn't exist)
-#unimpl
+#ED <file>
+#not to be implemented as native
 #ok i would need to think up of something
 #uhhh
 
@@ -594,8 +594,8 @@ set bufptr 0#clean up
 write bufptr bank1 511
 jump loop always
 notDriveLetterChange:
-set check "4DIR |4DIR\n|4ERA |4ERA\n|4CPY |4CPY\n|5TYPE |5TYPE\n|3ED |3ED\n|4REN |4REN\n"
-set cmdc 12
+set check "4DIR |4DIR\n|4ERA |4ERA\n|4CPY |4CPY\n|5TYPE |5TYPE\n|4REN |4REN\n"
+set cmdc 10
 set cmdi 0
 set i 0
 sensor checklen check @size
@@ -662,12 +662,6 @@ set apphi 0x54595045
 jump handletermdfoundvalidcmdgotname always
 set applo 0x0
 set apphi 0x54595045
-jump handletermdfoundvalidcmdgotname always
-set applo 0x0
-set apphi 0x4544
-jump handletermdfoundvalidcmdgotname always
-set applo 0x0
-set apphi 0x4544
 jump handletermdfoundvalidcmdgotname always
 set applo 0x0
 set apphi 0x52454e
